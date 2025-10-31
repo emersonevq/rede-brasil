@@ -50,7 +50,8 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=PostOut)
 def create_post(payload: PostCreate, db: Session = Depends(get_db), current=Depends(get_current_user)):
-    post = Post(user_id=current.id, content=payload.content, media_url=payload.media_url)
+    unique_id = generate_unique_post_id(db)
+    post = Post(user_id=current.id, content=payload.content, media_url=payload.media_url, unique_id=unique_id)
     db.add(post)
     db.commit()
     db.refresh(post)
@@ -61,6 +62,7 @@ def create_post(payload: PostCreate, db: Session = Depends(get_db), current=Depe
         created_at=post.created_at,
         user_id=current.id,
         user_name=f"{current.first_name} {current.last_name}",
+        unique_id=post.unique_id,
         user_profile_photo=current.profile_photo,
         user_cover_photo=current.cover_photo,
     )
