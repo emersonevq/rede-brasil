@@ -427,7 +427,7 @@ export default function ChatScreen() {
             message_id: editingMessageId,
             content: inputText,
           };
-          socket.emit('edit_message', messageData);
+          socket.emit('message_edit', messageData);
         }
         setEditingMessageId(null);
         setEditingContent('');
