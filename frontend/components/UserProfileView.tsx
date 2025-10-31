@@ -1424,7 +1424,7 @@ export default function UserProfileView({
               }}
               onPress={() => {
                 setShowAvatarMenu(false);
-                router.push(`/photo/${p.username}`);
+                router.push(`/detail/photo:${p.username}`);
               }}
             >
               <Text
