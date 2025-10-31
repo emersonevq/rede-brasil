@@ -353,6 +353,15 @@ export default function MessagesScreen() {
           />
         </View>
 
+        {loadError && (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorText}>{loadError}</Text>
+            <TouchableOpacity onPress={onRefresh} activeOpacity={0.7}>
+              <Text style={styles.errorRetry}>Tentar novamente</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <FlatList
           data={filteredChats}
           keyExtractor={(item) => item.id.toString()}
