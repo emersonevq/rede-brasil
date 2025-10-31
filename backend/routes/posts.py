@@ -137,6 +137,7 @@ def update_post(
         media_url=post.media_url,
         created_at=post.created_at,
         user_id=post.user_id,
+        unique_id=post.unique_id,
         user_name=f"{post.author.first_name} {post.author.last_name}" if post.author else "Anônimo",
         user_profile_photo=post.author.profile_photo if post.author else None,
         user_cover_photo=post.author.cover_photo if post.author else None,
