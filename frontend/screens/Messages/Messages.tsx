@@ -214,6 +214,21 @@ export default function MessagesScreen() {
   const [conversations, setConversations] = useState<ChatItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [unreadTotal, setUnreadTotal] = useState(0);
+  const [currentUserId, setCurrentUserId] = useState<number | undefined>();
+
+  // Get current user
+  useEffect(() => {
+    (async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          setCurrentUserId(user.id);
+        }
+      } catch (error) {
+        console.error('Error getting current user:', error);
+      }
+    })();
+  }, []);
 
   // Initialize socket
   useEffect(() => {
