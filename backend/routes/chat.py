@@ -192,13 +192,84 @@ async def search_conversations(
     limit: int = 20,
 ):
     """Search conversations by name"""
-    conversations = chat_service.search_conversations(
-        user_id=current_user.id,
-        query=q,
-        limit=limit
-    )
+    from database.session import SessionLocal
+    from sqlalchemy.orm import selectinload
 
-    return [format_conversation(conv, current_user.id) for conv in conversations]
+    db = SessionLocal()
+    try:
+        search_query = f"%{q}%"
+        conversations = db.query(Conversation).options(
+            selectinload(Conversation.participants),
+            selectinload(Conversation.messages).selectinload(Message.sender),
+            selectinload(Conversation.messages).selectinload(Message.read_by)
+        ).join(
+            Conversation.participants
+        ).filter(
+            and_(
+                User.id == current_user.id,
+                Conversation.deleted_at == None,
+                Conversation.name.ilike(search_query)
+            )
+        ).order_by(
+            Conversation.updated_at.desc()
+        ).limit(limit).all()
+
+        result = []
+        for conv in conversations:
+            unread_count = chat_service.get_unread_count(
+                conversation_id=conv.id,
+                user_id=current_user.id
+            )
+
+            latest_message = None
+            if conv.messages:
+                latest_msg = conv.messages[-1]
+                read_by_ids = [u.id for u in latest_msg.read_by]
+                latest_message = {
+                    "id": latest_msg.id,
+                    "content": latest_msg.content,
+                    "content_type": latest_msg.content_type,
+                    "media_url": latest_msg.media_url,
+                    "is_deleted": latest_msg.is_deleted,
+                    "edited_at": latest_msg.edited_at.isoformat() if latest_msg.edited_at else None,
+                    "created_at": latest_msg.created_at.isoformat(),
+                    "read_by": read_by_ids,
+                    "sender": {
+                        "id": latest_msg.sender.id,
+                        "username": latest_msg.sender.username,
+                        "first_name": latest_msg.sender.first_name,
+                        "last_name": latest_msg.sender.last_name,
+                        "profile_photo": latest_msg.sender.profile_photo,
+                    }
+                }
+
+            participants = [
+                {
+                    "id": p.id,
+                    "username": p.username,
+                    "first_name": p.first_name,
+                    "last_name": p.last_name,
+                    "profile_photo": p.profile_photo,
+                }
+                for p in conv.participants
+            ]
+
+            result.append({
+                "id": conv.id,
+                "name": conv.name,
+                "description": conv.description,
+                "is_group": conv.is_group,
+                "avatar_url": conv.avatar_url,
+                "participants": participants,
+                "latest_message": latest_message,
+                "unread_count": unread_count,
+                "created_at": conv.created_at.isoformat(),
+                "updated_at": conv.updated_at.isoformat(),
+            })
+
+        return result
+    finally:
+        db.close()
 
 
 @router.post("/conversations")
