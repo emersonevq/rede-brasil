@@ -9,10 +9,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
-  SafeAreaView,
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Send, Plus, Smile, Mic, X } from 'lucide-react-native';
 import {
