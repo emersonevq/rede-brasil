@@ -229,7 +229,7 @@ export default function MessagesScreen() {
           setCurrentUserId(user.id);
         }
       } catch (error) {
-        console.error('Error getting current user:', error);
+        console.warn('getCurrentUser failed:', error);
       }
     })();
   }, []);
