@@ -547,7 +547,7 @@ export default function ChatScreen() {
         // For audio, show a simple message for now
         const messageData = {
           conversation_id: parseInt(id as string),
-          content: '🎙️ Mensagem de áudio',
+          content: '��️ Mensagem de áudio',
           content_type: 'audio',
         };
         socket.emit('chat_message', messageData);
@@ -685,12 +685,29 @@ export default function ChatScreen() {
       if (socket) {
         socket.emit('chat_message', messageData);
       } else {
-        await sendChatMessage(
+        const res = await sendChatMessage(
           parseInt(id as string),
           messageData.content,
           'image',
           uploadData.media_url,
         );
+        const message: Message = {
+          id: res.id,
+          conversation_id: res.conversation_id,
+          content: res.content,
+          content_type: 'image',
+          media_url: res.media_url,
+          is_read: false,
+          created_at: res.created_at,
+          sender: {
+            id: currentUserId || 0,
+            username: '',
+            first_name: '',
+            last_name: '',
+            profile_photo: undefined,
+          },
+        };
+        setMessages((prev) => [...prev, message]);
       }
     } catch (error) {
       console.error('Error sending video:', error);
