@@ -1314,7 +1314,7 @@ export default function UserProfileView({
               }}
               onPress={() => {
                 setShowCoverMenu(false);
-                router.push(`/cover/${p.username}`);
+                router.push(`/detail/cover:${p.username}`);
               }}
             >
               <Text
