@@ -29,7 +29,9 @@ import {
 } from 'lucide-react-native';
 
 const { width: screenWidth } = Dimensions.get('window');
-const PHOTO_SIZE = (screenWidth - 48) / 3 - 8;
+const COLUMNS = 5;
+const PHOTO_SIZE = Math.floor((screenWidth - 48) / COLUMNS - 8);
+const ITEM_HEIGHT = Math.round(PHOTO_SIZE * 1.6);
 
 export type Highlight = {
   id: string;
@@ -161,9 +163,9 @@ const DraggablePhoto = ({
 
           // fallback to grid math (for safety)
           if (targetIndex === null) {
-            const columns = 3;
+            const columns = COLUMNS;
             const ITEM_W = PHOTO_SIZE + 8;
-            const ITEM_H = PHOTO_SIZE + 8;
+            const ITEM_H = ITEM_HEIGHT + 8;
             const movedCols = Math.round((gestureState.dx ?? 0) / ITEM_W);
             const movedRows = Math.round((gestureState.dy ?? 0) / ITEM_H);
             const currentCol = index % columns;
@@ -667,7 +669,7 @@ const styles = StyleSheet.create({
   },
   photoContainer: {
     width: PHOTO_SIZE,
-    height: PHOTO_SIZE,
+    height: ITEM_HEIGHT,
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#f1f5f9',
@@ -733,7 +735,7 @@ const styles = StyleSheet.create({
   },
   addPhotoInline: {
     width: PHOTO_SIZE,
-    height: PHOTO_SIZE,
+    height: ITEM_HEIGHT,
     borderRadius: 12,
     borderWidth: 2,
     borderColor: '#e2e8f0',
