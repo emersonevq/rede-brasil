@@ -67,9 +67,20 @@ const DraggablePhoto = ({
   onReplace: () => void;
   onDragEnd: (fromIndex: number, toIndex: number) => void;
   totalPhotos: number;
-  itemLayouts?: Record<number, { x: number; y: number; width: number; height: number }>;
-  containerLayout?: { x: number; y: number; width: number; height: number } | null;
-  onItemLayout?: (idx: number, layout: { x: number; y: number; width: number; height: number }) => void;
+  itemLayouts?: Record<
+    number,
+    { x: number; y: number; width: number; height: number }
+  >;
+  containerLayout?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null;
+  onItemLayout?: (
+    idx: number,
+    layout: { x: number; y: number; width: number; height: number },
+  ) => void;
   setHoverIndex?: (idx: number | null) => void;
 }) => {
   const pan = useRef(new Animated.ValueXY()).current;
@@ -111,8 +122,10 @@ const DraggablePhoto = ({
           const dx = gs?.dx ?? 0;
           const dy = gs?.dy ?? 0;
 
-          const centerX = (containerLayout.x || 0) + start.x + dx + start.width / 2;
-          const centerY = (containerLayout.y || 0) + start.y + dy + start.height / 2;
+          const centerX =
+            (containerLayout.x || 0) + start.x + dx + start.width / 2;
+          const centerY =
+            (containerLayout.y || 0) + start.y + dy + start.height / 2;
 
           let found: number | null = null;
           Object.entries(itemLayouts).forEach(([key, rect]) => {
@@ -122,7 +135,12 @@ const DraggablePhoto = ({
             const ry1 = (containerLayout.y || 0) + rect.y;
             const rx2 = rx1 + rect.width;
             const ry2 = ry1 + rect.height;
-            if (centerX >= rx1 && centerX <= rx2 && centerY >= ry1 && centerY <= ry2) {
+            if (
+              centerX >= rx1 &&
+              centerX <= rx2 &&
+              centerY >= ry1 &&
+              centerY <= ry2
+            ) {
               found = i;
             }
           });
@@ -144,8 +162,10 @@ const DraggablePhoto = ({
             if (start) {
               const dx = gestureState.dx ?? 0;
               const dy = gestureState.dy ?? 0;
-              const centerX = (containerLayout.x || 0) + start.x + dx + start.width / 2;
-              const centerY = (containerLayout.y || 0) + start.y + dy + start.height / 2;
+              const centerX =
+                (containerLayout.x || 0) + start.x + dx + start.width / 2;
+              const centerY =
+                (containerLayout.y || 0) + start.y + dy + start.height / 2;
 
               Object.entries(itemLayouts).forEach(([key, rect]) => {
                 const i = Number(key);
@@ -154,7 +174,12 @@ const DraggablePhoto = ({
                 const ry1 = (containerLayout.y || 0) + rect.y;
                 const rx2 = rx1 + rect.width;
                 const ry2 = ry1 + rect.height;
-                if (centerX >= rx1 && centerX <= rx2 && centerY >= ry1 && centerY <= ry2) {
+                if (
+                  centerX >= rx1 &&
+                  centerX <= rx2 &&
+                  centerY >= ry1 &&
+                  centerY <= ry2
+                ) {
                   targetIndex = i;
                 }
               });
@@ -170,13 +195,29 @@ const DraggablePhoto = ({
             const movedRows = Math.round((gestureState.dy ?? 0) / ITEM_H);
             const currentCol = index % columns;
             const currentRow = Math.floor(index / columns);
-            const newCol = Math.max(0, Math.min(columns - 1, currentCol + movedCols));
-            const newRow = Math.max(0, Math.min(Math.ceil(totalPhotos / columns) - 1, currentRow + movedRows));
-            const newIndex = Math.min(totalPhotos - 1, newRow * columns + newCol);
+            const newCol = Math.max(
+              0,
+              Math.min(columns - 1, currentCol + movedCols),
+            );
+            const newRow = Math.max(
+              0,
+              Math.min(
+                Math.ceil(totalPhotos / columns) - 1,
+                currentRow + movedRows,
+              ),
+            );
+            const newIndex = Math.min(
+              totalPhotos - 1,
+              newRow * columns + newCol,
+            );
             if (newIndex !== index) targetIndex = newIndex;
           }
 
-          if (targetIndex !== null && targetIndex !== undefined && targetIndex !== index) {
+          if (
+            targetIndex !== null &&
+            targetIndex !== undefined &&
+            targetIndex !== index
+          ) {
             onDragEnd(index, targetIndex);
 
             if (Platform.OS === 'ios') Vibration.vibrate(10);
@@ -204,7 +245,9 @@ const DraggablePhoto = ({
 
   return (
     <Animated.View
-      onLayout={(e) => onItemLayout && onItemLayout(index, e.nativeEvent.layout)}
+      onLayout={(e) =>
+        onItemLayout && onItemLayout(index, e.nativeEvent.layout)
+      }
       {...panResponder.panHandlers}
       style={[
         styles.photoContainer,
@@ -265,11 +308,21 @@ export default function HighlightManager({
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // layout tracking for hover detection
-  const [itemLayouts, setItemLayouts] = useState<Record<number, { x: number; y: number; width: number; height: number }>>({});
-  const [containerLayout, setContainerLayout] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [itemLayouts, setItemLayouts] = useState<
+    Record<number, { x: number; y: number; width: number; height: number }>
+  >({});
+  const [containerLayout, setContainerLayout] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
   const [currentOverIndex, setCurrentOverIndex] = useState<number | null>(null);
 
-  const handleItemLayout = (idx: number, layout: { x: number; y: number; width: number; height: number }) => {
+  const handleItemLayout = (
+    idx: number,
+    layout: { x: number; y: number; width: number; height: number },
+  ) => {
     setItemLayouts((prev) => ({ ...prev, [idx]: layout }));
   };
 
@@ -298,7 +351,10 @@ export default function HighlightManager({
   const pickImage = async (isCover: boolean = false, replaceIndex?: number) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permissão necessária', 'Permitir acesso à galeria para selecionar fotos.');
+      Alert.alert(
+        'Permissão necessária',
+        'Permitir acesso à galeria para selecionar fotos.',
+      );
       return;
     }
 
@@ -384,7 +440,7 @@ export default function HighlightManager({
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
-      <Animated.View style={[styles.container, { opacity: fadeAnim }]}> 
+      <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.headerBtn}>
             <X size={24} color="#475569" strokeWidth={2} />
@@ -392,7 +448,9 @@ export default function HighlightManager({
 
           <View style={styles.headerTitle}>
             <Sparkles size={20} color="#3b82f6" strokeWidth={2} />
-            <Text style={styles.title}>{highlight ? 'Editar Destaque' : 'Novo Destaque'}</Text>
+            <Text style={styles.title}>
+              {highlight ? 'Editar Destaque' : 'Novo Destaque'}
+            </Text>
           </View>
 
           <TouchableOpacity
@@ -401,14 +459,25 @@ export default function HighlightManager({
             style={[
               styles.headerBtn,
               styles.saveBtn,
-              { opacity: loading || !name || !cover || photos.length === 0 ? 0.3 : 1 },
+              {
+                opacity:
+                  loading || !name || !cover || photos.length === 0 ? 0.3 : 1,
+              },
             ]}
           >
-            {loading ? <ActivityIndicator color="#3b82f6" size="small" /> : <Check size={24} color="#3b82f6" strokeWidth={2.5} />}
+            {loading ? (
+              <ActivityIndicator color="#3b82f6" size="small" />
+            ) : (
+              <Check size={24} color="#3b82f6" strokeWidth={2.5} />
+            )}
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>Nome do Destaque</Text>
@@ -426,7 +495,11 @@ export default function HighlightManager({
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Capa do Destaque</Text>
-            <TouchableOpacity onPress={() => pickImage(true)} style={styles.coverButton} activeOpacity={0.8}>
+            <TouchableOpacity
+              onPress={() => pickImage(true)}
+              style={styles.coverButton}
+              activeOpacity={0.8}
+            >
               {cover ? (
                 <>
                   <Image source={{ uri: cover }} style={styles.coverImage} />
@@ -440,7 +513,9 @@ export default function HighlightManager({
               ) : (
                 <View style={styles.coverPlaceholder}>
                   <Camera size={32} color="#94a3b8" strokeWidth={1.5} />
-                  <Text style={styles.coverPlaceholderText}>Toque para adicionar capa</Text>
+                  <Text style={styles.coverPlaceholderText}>
+                    Toque para adicionar capa
+                  </Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -449,22 +524,37 @@ export default function HighlightManager({
           <View style={styles.card}>
             <View style={styles.photosHeader}>
               <Text style={styles.cardTitle}>Fotos ({photos.length})</Text>
-              <TouchableOpacity onPress={() => pickImage(false)} style={styles.addPhotoBtn} activeOpacity={0.7}>
+              <TouchableOpacity
+                onPress={() => pickImage(false)}
+                style={styles.addPhotoBtn}
+                activeOpacity={0.7}
+              >
                 <Plus size={18} color="#ffffff" strokeWidth={2.5} />
                 <Text style={styles.addPhotoBtnText}>Adicionar</Text>
               </TouchableOpacity>
             </View>
 
             {photos.length === 0 ? (
-              <TouchableOpacity style={styles.emptyState} onPress={() => pickImage(false)} activeOpacity={0.7}>
+              <TouchableOpacity
+                style={styles.emptyState}
+                onPress={() => pickImage(false)}
+                activeOpacity={0.7}
+              >
                 <ImageIcon size={48} color="#cbd5e1" strokeWidth={1.5} />
                 <Text style={styles.emptyTitle}>Nenhuma foto ainda</Text>
-                <Text style={styles.emptyText}>Toque para adicionar suas primeiras fotos</Text>
+                <Text style={styles.emptyText}>
+                  Toque para adicionar suas primeiras fotos
+                </Text>
               </TouchableOpacity>
             ) : (
               <>
-                <Text style={styles.dragHint}>💡 Arraste as fotos para reorganizar a ordem</Text>
-                <View style={styles.photosGrid} onLayout={(e) => setContainerLayout(e.nativeEvent.layout)}>
+                <Text style={styles.dragHint}>
+                  💡 Arraste as fotos para reorganizar a ordem
+                </Text>
+                <View
+                  style={styles.photosGrid}
+                  onLayout={(e) => setContainerLayout(e.nativeEvent.layout)}
+                >
                   {photos.map((photo, index) => (
                     <DraggablePhoto
                       key={`photo_${index}_${photo}`}
@@ -482,7 +572,11 @@ export default function HighlightManager({
                   ))}
 
                   {photos.length < 30 && (
-                    <TouchableOpacity style={styles.addPhotoInline} onPress={() => pickImage(false)} activeOpacity={0.7}>
+                    <TouchableOpacity
+                      style={styles.addPhotoInline}
+                      onPress={() => pickImage(false)}
+                      activeOpacity={0.7}
+                    >
                       <Plus size={24} color="#94a3b8" strokeWidth={2} />
                     </TouchableOpacity>
                   )}
@@ -491,7 +585,9 @@ export default function HighlightManager({
                 {/* Optional visual hint when hovering */}
                 {currentOverIndex !== null && (
                   <View style={{ padding: 12 }}>
-                    <Text style={{ color: '#64748b' }}>Solte para trocar com a posição {currentOverIndex + 1}</Text>
+                    <Text style={{ color: '#64748b' }}>
+                      Solte para trocar com a posição {currentOverIndex + 1}
+                    </Text>
                   </View>
                 )}
               </>

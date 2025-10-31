@@ -1476,7 +1476,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
   },
-  coverContainer: { position: 'relative', overflow: 'hidden', borderBottomLeftRadius: 16, borderBottomRightRadius: 16, backgroundColor: '#ffffff' },
+  coverContainer: {
+    position: 'relative',
+    overflow: 'hidden',
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    backgroundColor: '#ffffff',
+  },
   coverImage: { width: '100%', height: 220, backgroundColor: '#e2e8f0' },
   coverGradient: {
     position: 'absolute',

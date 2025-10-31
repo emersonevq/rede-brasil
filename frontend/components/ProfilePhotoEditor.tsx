@@ -260,7 +260,6 @@ export default function ProfilePhotoEditor({
                 )}
               </View>
 
-
               <TouchableOpacity
                 onPress={handleReset}
                 style={[
@@ -301,7 +300,6 @@ export default function ProfilePhotoEditor({
               />
               <Text style={styles.charCount}>{caption.length}/150</Text>
             </View>
-
           </ScrollView>
 
           <View style={styles.footer}>

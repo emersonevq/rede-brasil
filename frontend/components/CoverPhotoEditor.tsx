@@ -355,7 +355,9 @@ export default function CoverPhotoEditor({
 
                     {/* Overlay de Instruções */}
                     <View style={styles.instructionOverlay}>
-                      <Text style={styles.instructionText}>Use dois dedos para ampliar</Text>
+                      <Text style={styles.instructionText}>
+                        Use dois dedos para ampliar
+                      </Text>
                     </View>
                   </View>
 
