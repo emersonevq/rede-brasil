@@ -92,13 +92,13 @@ const DraggablePhoto = ({
         useNativeDriver: false,
       }),
 
-      onPanResponderRelease: () => {
+      onPanResponderRelease: (_, gs) => {
         setIsBeingDragged(false);
 
         try {
           const start = layouts[index];
-          const dx = (pan.x as any).__getValue ? (pan.x as any).__getValue() : 0;
-          const dy = (pan.y as any).__getValue ? (pan.y as any).__getValue() : 0;
+          const dx = gs?.dx ?? 0;
+          const dy = gs?.dy ?? 0;
           const centerX = (start?.x || 0) + dx + (start?.width || PHOTO_SIZE) / 2;
           const centerY = (start?.y || 0) + dy + (start?.height || PHOTO_SIZE) / 2;
 
