@@ -99,6 +99,16 @@ async def update_profile_photo(
         media_url = f"/media/{unique_filename}"
         current.profile_photo = media_url
         db.add(current)
+
+        # Generate unique_id for profile if not already set
+        profile = db.query(UserProfile).filter(UserProfile.user_id == current.id).first()
+        if not profile:
+            profile = UserProfile(user_id=current.id, unique_id=generate_unique_profile_id(db))
+            db.add(profile)
+        elif not profile.unique_id:
+            profile.unique_id = generate_unique_profile_id(db)
+            db.add(profile)
+
         db.commit()
         db.refresh(current)
 
