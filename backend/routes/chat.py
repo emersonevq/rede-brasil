@@ -107,16 +107,78 @@ async def get_conversation(
 ):
     """Get a single conversation by ID"""
     try:
-        conversation = chat_service.get_conversation(conversation_id)
-        if not conversation:
-            raise HTTPException(status_code=404, detail="Conversation not found")
+        from database.session import SessionLocal
+        from sqlalchemy.orm import selectinload
 
-        # Check if user is a participant
-        participant_ids = [p.id for p in conversation.participants]
-        if current_user.id not in participant_ids:
-            raise HTTPException(status_code=403, detail="Not a participant of this conversation")
+        db = SessionLocal()
+        try:
+            conversation = db.query(Conversation).options(
+                selectinload(Conversation.participants),
+                selectinload(Conversation.messages).selectinload(Message.sender),
+                selectinload(Conversation.messages).selectinload(Message.read_by)
+            ).filter(Conversation.id == conversation_id).first()
 
-        return format_conversation(conversation, current_user.id)
+            if not conversation:
+                raise HTTPException(status_code=404, detail="Conversation not found")
+
+            # Check if user is a participant - do this while session is active
+            participant_ids = [p.id for p in conversation.participants]
+            if current_user.id not in participant_ids:
+                raise HTTPException(status_code=403, detail="Not a participant of this conversation")
+
+            # Format while session is still active
+            unread_count = chat_service.get_unread_count(
+                conversation_id=conversation.id,
+                user_id=current_user.id
+            )
+
+            latest_message = None
+            if conversation.messages:
+                latest_msg = conversation.messages[-1]
+                read_by_ids = [u.id for u in latest_msg.read_by]
+                latest_message = {
+                    "id": latest_msg.id,
+                    "content": latest_msg.content,
+                    "content_type": latest_msg.content_type,
+                    "media_url": latest_msg.media_url,
+                    "is_deleted": latest_msg.is_deleted,
+                    "edited_at": latest_msg.edited_at.isoformat() if latest_msg.edited_at else None,
+                    "created_at": latest_msg.created_at.isoformat(),
+                    "read_by": read_by_ids,
+                    "sender": {
+                        "id": latest_msg.sender.id,
+                        "username": latest_msg.sender.username,
+                        "first_name": latest_msg.sender.first_name,
+                        "last_name": latest_msg.sender.last_name,
+                        "profile_photo": latest_msg.sender.profile_photo,
+                    }
+                }
+
+            participants = [
+                {
+                    "id": p.id,
+                    "username": p.username,
+                    "first_name": p.first_name,
+                    "last_name": p.last_name,
+                    "profile_photo": p.profile_photo,
+                }
+                for p in conversation.participants
+            ]
+
+            return {
+                "id": conversation.id,
+                "name": conversation.name,
+                "description": conversation.description,
+                "is_group": conversation.is_group,
+                "avatar_url": conversation.avatar_url,
+                "participants": participants,
+                "latest_message": latest_message,
+                "unread_count": unread_count,
+                "created_at": conversation.created_at.isoformat(),
+                "updated_at": conversation.updated_at.isoformat(),
+            }
+        finally:
+            db.close()
     except HTTPException:
         raise
     except Exception as e:
