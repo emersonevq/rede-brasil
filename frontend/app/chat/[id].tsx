@@ -17,6 +17,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Send, Plus, Smile, Mic, X } from 'lucide-react-native';
 import {
   getCurrentUser,
+  getConversation,
   getConversationMessages,
   uploadChatFile,
   API_BASE_URL,
@@ -268,9 +269,14 @@ export default function ChatScreen() {
     const loadConversation = async () => {
       try {
         setIsLoading(true);
+        const conversationData = await getConversation(parseInt(id as string));
         const messages = await getConversationMessages(parseInt(id as string));
 
-        // Create a mock conversation object (in production this would come from API)
+        setConversation(conversationData);
+        setMessages(messages as unknown as Message[]);
+      } catch (error) {
+        console.error('Error loading conversation:', error);
+        // Fallback to creating empty conversation
         setConversation({
           id: parseInt(id as string),
           is_group: false,
@@ -278,10 +284,6 @@ export default function ChatScreen() {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
-
-        setMessages(messages as unknown as Message[]);
-      } catch (error) {
-        console.error('Error loading messages:', error);
       } finally {
         setIsLoading(false);
       }
