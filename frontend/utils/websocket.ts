@@ -10,9 +10,13 @@ const API_BASE_URL =
 let socket: Socket | null = null;
 
 export function initializeSocket() {
+  // If socket already exists and is connected, return it
+  if (socket && socket.connected) {
+    return socket;
+  }
+
   const token = getToken();
   if (!token) {
-    console.warn('No token available for WebSocket connection');
     return null;
   }
 
