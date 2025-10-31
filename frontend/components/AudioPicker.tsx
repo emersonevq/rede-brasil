@@ -85,7 +85,7 @@ export default function AudioPicker({ onAudioSelected }: AudioPickerProps) {
       setIsPlaying(true);
 
       sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.didJustFinish) {
+        if ((status as any).didJustFinish) {
           setIsPlaying(false);
         }
       });
