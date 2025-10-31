@@ -146,8 +146,8 @@ const ChatItem = ({
           <Image
             source={{
               uri:
-                item.participants[0]?.profile_photo ||
-                `https://i.pravatar.cc/150?u=${item.participants[0]?.id}`,
+                getOtherParticipant()?.profile_photo ||
+                `https://i.pravatar.cc/150?u=${getOtherParticipant()?.id}`,
             }}
             style={styles.avatar}
           />
