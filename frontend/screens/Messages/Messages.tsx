@@ -351,6 +351,7 @@ export default function MessagesScreen() {
               item={item}
               onPress={() => handleChatPress(item.id)}
               onDelete={handleDeleteConversation}
+              currentUserId={currentUserId}
             />
           )}
           contentContainerStyle={styles.chatList}
