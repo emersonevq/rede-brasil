@@ -84,10 +84,9 @@ const DraggablePhoto = ({
         }).start();
       },
 
-      onPanResponderMove: Animated.event(
-        [null, { dx: pan.x, dy: pan.y }],
-        { useNativeDriver: false }
-      ),
+      onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], {
+        useNativeDriver: false,
+      }),
 
       onPanResponderRelease: (_, gestureState) => {
         setIsBeingDragged(false);
@@ -105,10 +104,16 @@ const DraggablePhoto = ({
         const currentRow = Math.floor(index / columns);
         const currentCol = index % columns;
 
-        const newCol = Math.max(0, Math.min(columns - 1, currentCol + colChange));
+        const newCol = Math.max(
+          0,
+          Math.min(columns - 1, currentCol + colChange),
+        );
         const newRow = Math.max(
           0,
-          Math.min(Math.ceil(totalPhotos / columns) - 1, currentRow + rowChange)
+          Math.min(
+            Math.ceil(totalPhotos / columns) - 1,
+            currentRow + rowChange,
+          ),
         );
 
         const newIndex = Math.min(totalPhotos - 1, newRow * columns + newCol);
@@ -128,7 +133,7 @@ const DraggablePhoto = ({
           }),
         ]).start();
       },
-    })
+    }),
   ).current;
 
   return (
@@ -137,11 +142,7 @@ const DraggablePhoto = ({
       style={[
         styles.photoContainer,
         {
-          transform: [
-            { translateX: pan.x },
-            { translateY: pan.y },
-            { scale },
-          ],
+          transform: [{ translateX: pan.x }, { translateY: pan.y }, { scale }],
           zIndex: isBeingDragged ? 1000 : 1,
           opacity: isBeingDragged ? 0.9 : 1,
         },
@@ -219,7 +220,7 @@ export default function HighlightManager({
     if (status !== 'granted') {
       Alert.alert(
         'Permissão necessária',
-        'Permitir acesso à galeria para selecionar fotos.'
+        'Permitir acesso à galeria para selecionar fotos.',
       );
       return;
     }

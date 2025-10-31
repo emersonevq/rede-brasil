@@ -328,7 +328,9 @@ export default function CoverPhotoEditor({
                   style={[styles.rectContainer, { height }]}
                   onLayout={() => setImageLoaded(true)}
                 >
-                  <View style={[styles.rectMask, { height, width: SCREEN_WIDTH }]}>
+                  <View
+                    style={[styles.rectMask, { height, width: SCREEN_WIDTH }]}
+                  >
                     {imageLoaded && (
                       <Image
                         source={{ uri: imageUri }}

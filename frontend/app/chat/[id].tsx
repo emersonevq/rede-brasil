@@ -16,16 +16,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Send, Plus, Smile, Mic, X } from 'lucide-react-native';
 import {
-    getCurrentUser,
-    getConversation,
-    getConversationMessages,
-    uploadChatFile,
-    API_BASE_URL,
-    getToken,
-    sendChatMessage,
-    editMessage,
-    deleteMessage,
-  } from '../../utils/api';
+  getCurrentUser,
+  getConversation,
+  getConversationMessages,
+  uploadChatFile,
+  API_BASE_URL,
+  getToken,
+  sendChatMessage,
+  editMessage,
+  deleteMessage,
+} from '../../utils/api';
 import { getSocket, initializeSocket } from '../../utils/websocket';
 import * as ImagePicker from 'expo-image-picker';
 import AudioRecorder from '../../components/AudioRecorder';
@@ -321,8 +321,10 @@ export default function ChatScreen() {
           sender: {
             id: data.sender?.id || 0,
             username: data.sender?.username || data.sender?.name || '',
-            first_name: data.sender?.first_name || (data.sender?.name?.split(' ')[0] || ''),
-            last_name: data.sender?.last_name || (data.sender?.name?.split(' ')[1] || ''),
+            first_name:
+              data.sender?.first_name || data.sender?.name?.split(' ')[0] || '',
+            last_name:
+              data.sender?.last_name || data.sender?.name?.split(' ')[1] || '',
             profile_photo: data.sender?.profile_photo || data.sender?.avatar,
           },
           read_by: data.read_by || [],
@@ -530,7 +532,6 @@ export default function ChatScreen() {
   };
 
   const handleAddMedia = async (type: 'image' | 'audio' | 'gif') => {
-
     try {
       setIsSending(true);
 
