@@ -16,14 +16,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Send, Plus, Smile, Mic, X } from 'lucide-react-native';
 import {
-  getCurrentUser,
-  getConversation,
-  getConversationMessages,
-  uploadChatFile,
-  API_BASE_URL,
-  getToken,
-  sendChatMessage,
-} from '../../utils/api';
+    getCurrentUser,
+    getConversation,
+    getConversationMessages,
+    uploadChatFile,
+    API_BASE_URL,
+    getToken,
+    sendChatMessage,
+    editMessage,
+    deleteMessage,
+  } from '../../utils/api';
 import { getSocket, initializeSocket } from '../../utils/websocket';
 import * as ImagePicker from 'expo-image-picker';
 import AudioRecorder from '../../components/AudioRecorder';
@@ -57,9 +59,11 @@ interface Message {
   content: string;
   content_type: 'text' | 'image' | 'audio' | 'gif';
   media_url?: string;
-  is_read: boolean;
+  is_deleted: boolean;
+  edited_at?: string;
   created_at: string;
   sender: User;
+  read_by: number[];
   reactions?: Reaction[];
 }
 
@@ -311,16 +315,19 @@ export default function ChatScreen() {
           content: data.content,
           content_type: data.content_type || 'text',
           media_url: data.media_url,
-          is_read: data.is_read || false,
+          is_deleted: data.is_deleted || false,
+          edited_at: data.edited_at,
           created_at: data.created_at,
           sender: {
             id: data.sender?.id || 0,
-            username: data.sender?.name || '',
-            first_name: data.sender?.name?.split(' ')[0] || '',
-            last_name: data.sender?.name?.split(' ')[1] || '',
-            profile_photo: data.sender?.avatar,
+            username: data.sender?.username || data.sender?.name || '',
+            first_name: data.sender?.first_name || (data.sender?.name?.split(' ')[0] || ''),
+            last_name: data.sender?.last_name || (data.sender?.name?.split(' ')[1] || ''),
+            profile_photo: data.sender?.profile_photo || data.sender?.avatar,
           },
+          read_by: data.read_by || [],
         };
+        console.log('Received chat_message:', message);
         setMessages((prev) => [...prev, message]);
       }
     };
@@ -392,11 +399,16 @@ export default function ChatScreen() {
       }
     };
 
+    const handleError = (error: any) => {
+      console.error('WebSocket error:', error);
+    };
+
     socket.on('chat_message', handleNewMessage);
     socket.on('message_sent', handleMessageSent);
     socket.on('typing_start', handleTypingStart);
     socket.on('typing_stop', handleTypingStop);
     socket.on('message_reaction', handleMessageReaction);
+    socket.on('error', handleError);
 
     return () => {
       socket.off('chat_message', handleNewMessage);
@@ -404,6 +416,7 @@ export default function ChatScreen() {
       socket.off('typing_start', handleTypingStart);
       socket.off('typing_stop', handleTypingStop);
       socket.off('message_reaction', handleMessageReaction);
+      socket.off('error', handleError);
     };
   }, [socket, id]);
 
@@ -428,12 +441,15 @@ export default function ChatScreen() {
             content: inputText,
           };
           socket.emit('message_edit', messageData);
+        } else {
+          await editMessage(editingMessageId, inputText);
         }
         setEditingMessageId(null);
         setEditingContent('');
       } else {
         // Send new message via WebSocket or fallback to REST
-        if (socket) {
+        if (socket && socket.connected) {
+          console.log('Sending message via WebSocket');
           const messageData = {
             conversation_id: parseInt(id as string),
             content: inputText,
@@ -441,7 +457,8 @@ export default function ChatScreen() {
           };
           socket.emit('chat_message', messageData);
         } else {
-          // Fallback to REST API and update local state
+          // Fallback to REST API
+          console.log('Sending message via REST API');
           const res = await sendChatMessage(
             parseInt(id as string),
             inputText,
@@ -453,7 +470,7 @@ export default function ChatScreen() {
             content: res.content,
             content_type: (res.content_type as any) || 'text',
             media_url: res.media_url,
-            is_read: false,
+            is_deleted: false,
             created_at: res.created_at,
             sender: {
               id: currentUserId || 0,
@@ -462,6 +479,7 @@ export default function ChatScreen() {
               last_name: '',
               profile_photo: undefined,
             },
+            read_by: [],
           };
           setMessages((prev) => [...prev, message]);
         }
@@ -479,7 +497,7 @@ export default function ChatScreen() {
   const handleTyping = (text: string) => {
     setInputText(text);
 
-    if (!socket) return;
+    if (!socket || !socket.connected) return;
 
     if (!isTyping && text.length > 0) {
       setIsTyping(true);
@@ -512,7 +530,6 @@ export default function ChatScreen() {
   };
 
   const handleAddMedia = async (type: 'image' | 'audio' | 'gif') => {
-    if (!socket) return;
 
     try {
       setIsSending(true);
@@ -576,7 +593,7 @@ export default function ChatScreen() {
         media_url: uploadData.media_url,
       };
 
-      if (socket) {
+      if (socket && socket.connected) {
         socket.emit('chat_message', messageData);
       } else {
         const res = await sendChatMessage(
@@ -591,7 +608,7 @@ export default function ChatScreen() {
           content: res.content,
           content_type: 'audio',
           media_url: res.media_url,
-          is_read: false,
+          is_deleted: false,
           created_at: res.created_at,
           sender: {
             id: currentUserId || 0,
@@ -600,6 +617,7 @@ export default function ChatScreen() {
             last_name: '',
             profile_photo: undefined,
           },
+          read_by: [],
         };
         setMessages((prev) => [...prev, message]);
       }
@@ -631,7 +649,7 @@ export default function ChatScreen() {
         media_url: uploadData.media_url,
       };
 
-      if (socket) {
+      if (socket && socket.connected) {
         socket.emit('chat_message', messageData);
       } else {
         const res = await sendChatMessage(
@@ -646,7 +664,7 @@ export default function ChatScreen() {
           content: res.content,
           content_type: 'audio',
           media_url: res.media_url,
-          is_read: false,
+          is_deleted: false,
           created_at: res.created_at,
           sender: {
             id: currentUserId || 0,
@@ -655,6 +673,7 @@ export default function ChatScreen() {
             last_name: '',
             profile_photo: undefined,
           },
+          read_by: [],
         };
         setMessages((prev) => [...prev, message]);
       }
@@ -682,7 +701,7 @@ export default function ChatScreen() {
         media_url: uploadData.media_url,
       };
 
-      if (socket) {
+      if (socket && socket.connected) {
         socket.emit('chat_message', messageData);
       } else {
         const res = await sendChatMessage(
@@ -697,7 +716,7 @@ export default function ChatScreen() {
           content: res.content,
           content_type: 'image',
           media_url: res.media_url,
-          is_read: false,
+          is_deleted: false,
           created_at: res.created_at,
           sender: {
             id: currentUserId || 0,
@@ -706,6 +725,7 @@ export default function ChatScreen() {
             last_name: '',
             profile_photo: undefined,
           },
+          read_by: [],
         };
         setMessages((prev) => [...prev, message]);
       }
@@ -717,7 +737,7 @@ export default function ChatScreen() {
   };
 
   const handleAddReaction = (emoji: string, messageId: number) => {
-    if (!socket) return;
+    if (!socket || !socket.connected) return;
     socket.emit('message_reaction', {
       message_id: messageId,
       emoji: emoji,
@@ -733,9 +753,12 @@ export default function ChatScreen() {
   };
 
   const handleDeleteMessage = async (messageId: number) => {
-    if (!socket) return;
     try {
-      socket.emit('delete_message', { message_id: messageId });
+      if (socket && socket.connected) {
+        socket.emit('delete_message', { message_id: messageId });
+      } else {
+        await deleteMessage(messageId);
+      }
       setMessages((prev) => prev.filter((m) => m.id !== messageId));
     } catch (error) {
       console.error('Error deleting message:', error);
