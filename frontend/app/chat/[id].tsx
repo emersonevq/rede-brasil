@@ -710,14 +710,21 @@ export default function ChatScreen() {
             {conversation &&
               !conversation.is_group &&
               conversation.participants.length > 0 && (
-                <Image
-                  source={{
-                    uri:
-                      conversation.participants[0]?.profile_photo ||
-                      `https://i.pravatar.cc/150?u=${conversation.participants[0]?.id}`,
-                  }}
-                  style={styles.headerAvatar}
-                />
+                (() => {
+                  const otherParticipant = conversation.participants.find(
+                    (p) => p.id !== currentUserId,
+                  ) || conversation.participants[0];
+                  return (
+                    <Image
+                      source={{
+                        uri:
+                          otherParticipant?.profile_photo ||
+                          `https://i.pravatar.cc/150?u=${otherParticipant?.id}`,
+                      }}
+                      style={styles.headerAvatar}
+                    />
+                  );
+                })()
               )}
             <View style={styles.headerTextContainer}>
               <Text style={styles.headerTitle}>{getConversationTitle}</Text>
