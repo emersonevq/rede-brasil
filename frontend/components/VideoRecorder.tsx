@@ -30,7 +30,7 @@ export default function VideoRecorder({ onVideoRecorded }: VideoRecorderProps) {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const videoRef = useRef<Video>(null);
-  const durationIntervalRef = useRef<NodeJS.Timeout>();
+  const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     return () => {
