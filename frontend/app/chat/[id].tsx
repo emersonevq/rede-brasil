@@ -28,8 +28,7 @@ import { getSocket } from '../../utils/websocket';
 import * as ImagePicker from 'expo-image-picker';
 import AudioRecorder from '../../components/AudioRecorder';
 import AudioPicker from '../../components/AudioPicker';
-import VideoRecorder from '../../components/VideoRecorder';
-import VideoPicker from '../../components/VideoPicker';
+import VideoMedia from '../../components/VideoMedia';
 
 const getDimensions = () => {
   if (Platform.OS === 'web') {
@@ -606,40 +605,6 @@ export default function ChatScreen() {
     }
   };
 
-  const handleVideoRecorded = async (uri: string, duration: number) => {
-    try {
-      setIsSending(true);
-
-      const uploadData = await uploadChatFile({
-        uri,
-        type: 'video/mp4',
-        name: `video_${Date.now()}.mp4`,
-      });
-
-      const messageData = {
-        conversation_id: parseInt(id as string),
-        content: `🎥 Vídeo (${Math.floor(duration)}s)`,
-        content_type: 'image',
-        media_url: uploadData.media_url,
-      };
-
-      if (socket) {
-        socket.emit('chat_message', messageData);
-      } else {
-        await sendChatMessage(
-          parseInt(id as string),
-          messageData.content,
-          'image',
-          uploadData.media_url,
-        );
-      }
-    } catch (error) {
-      console.error('Error sending video:', error);
-    } finally {
-      setIsSending(false);
-    }
-  };
-
   const handleVideoSelected = async (uri: string, duration: number) => {
     try {
       setIsSending(true);
@@ -652,7 +617,7 @@ export default function ChatScreen() {
 
       const messageData = {
         conversation_id: parseInt(id as string),
-        content: `🎥 V��deo (${Math.floor(duration)}s)`,
+        content: `🎥 Vídeo (${Math.floor(duration)}s)`,
         content_type: 'image',
         media_url: uploadData.media_url,
       };
@@ -840,8 +805,7 @@ export default function ChatScreen() {
             </TouchableOpacity>
 
             <AudioPicker onAudioSelected={handleAudioSelected} />
-            <VideoRecorder onVideoRecorded={handleVideoRecorded} />
-            <VideoPicker onVideoSelected={handleVideoSelected} />
+            <VideoMedia onVideoSelected={handleVideoSelected} />
           </View>
 
           <View style={styles.inputRow}>
