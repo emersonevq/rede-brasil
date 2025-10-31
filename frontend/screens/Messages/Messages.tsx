@@ -229,7 +229,7 @@ export default function MessagesScreen() {
           setCurrentUserId(user.id);
         }
       } catch (error) {
-        console.error('Error getting current user:', error);
+        console.warn('getCurrentUser failed:', error);
       }
     })();
   }, []);
@@ -239,14 +239,30 @@ export default function MessagesScreen() {
     initializeSocket();
   }, []);
 
+  // Refresh on incoming messages
+  useEffect(() => {
+    const s = getSocket();
+    if (!s) return;
+    const onNew = () => {
+      loadConversations();
+    };
+    s.on('chat_message', onNew);
+    return () => {
+      s.off('chat_message', onNew);
+    };
+  }, []);
+
   // Load conversations
   useEffect(() => {
     loadConversations();
   }, []);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const loadConversations = async () => {
     try {
       setIsLoading(true);
+      setLoadError(null);
       const conversations = await getConversations();
       setConversations(conversations);
 
@@ -256,7 +272,10 @@ export default function MessagesScreen() {
       );
       setUnreadTotal(total);
     } catch (error) {
-      console.error('Error loading conversations:', error);
+      setLoadError('Não foi possível carregar suas conversas agora.');
+      console.warn('loadConversations failed:', error);
+      setConversations([]);
+      setUnreadTotal(0);
     } finally {
       setIsLoading(false);
     }
@@ -346,6 +365,15 @@ export default function MessagesScreen() {
             onChangeText={setQuery}
           />
         </View>
+
+        {loadError && (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorText}>{loadError}</Text>
+            <TouchableOpacity onPress={onRefresh} activeOpacity={0.7}>
+              <Text style={styles.errorRetry}>Tentar novamente</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <FlatList
           data={filteredChats}
@@ -579,5 +607,29 @@ const styles = StyleSheet.create({
   deleteButton: {
     padding: 8,
     marginRight: 8,
+  },
+  errorBanner: {
+    backgroundColor: '#fee2e2',
+    borderColor: '#fecaca',
+    borderWidth: 1,
+    marginHorizontal: 20,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  errorText: {
+    color: '#b91c1c',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  errorRetry: {
+    color: '#991b1b',
+    fontSize: 13,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
 });

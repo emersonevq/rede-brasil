@@ -24,7 +24,7 @@ import {
   getToken,
   sendChatMessage,
 } from '../../utils/api';
-import { getSocket } from '../../utils/websocket';
+import { getSocket, initializeSocket } from '../../utils/websocket';
 import * as ImagePicker from 'expo-image-picker';
 import AudioRecorder from '../../components/AudioRecorder';
 import AudioPicker from '../../components/AudioPicker';
@@ -263,6 +263,11 @@ export default function ChatScreen() {
     })();
   }, []);
 
+  // Ensure socket is initialized
+  useEffect(() => {
+    initializeSocket();
+  }, []);
+
   // Load conversation and messages
   useEffect(() => {
     const loadConversation = async () => {
@@ -422,7 +427,7 @@ export default function ChatScreen() {
             message_id: editingMessageId,
             content: inputText,
           };
-          socket.emit('edit_message', messageData);
+          socket.emit('message_edit', messageData);
         }
         setEditingMessageId(null);
         setEditingContent('');
@@ -436,8 +441,29 @@ export default function ChatScreen() {
           };
           socket.emit('chat_message', messageData);
         } else {
-          // Fallback to REST API
-          await sendChatMessage(parseInt(id as string), inputText, 'text');
+          // Fallback to REST API and update local state
+          const res = await sendChatMessage(
+            parseInt(id as string),
+            inputText,
+            'text',
+          );
+          const message: Message = {
+            id: res.id,
+            conversation_id: res.conversation_id,
+            content: res.content,
+            content_type: (res.content_type as any) || 'text',
+            media_url: res.media_url,
+            is_read: false,
+            created_at: res.created_at,
+            sender: {
+              id: currentUserId || 0,
+              username: '',
+              first_name: '',
+              last_name: '',
+              profile_photo: undefined,
+            },
+          };
+          setMessages((prev) => [...prev, message]);
         }
       }
 
@@ -521,7 +547,7 @@ export default function ChatScreen() {
         // For audio, show a simple message for now
         const messageData = {
           conversation_id: parseInt(id as string),
-          content: '🎙️ Mensagem de áudio',
+          content: '��️ Mensagem de áudio',
           content_type: 'audio',
         };
         socket.emit('chat_message', messageData);
@@ -553,12 +579,29 @@ export default function ChatScreen() {
       if (socket) {
         socket.emit('chat_message', messageData);
       } else {
-        await sendChatMessage(
+        const res = await sendChatMessage(
           parseInt(id as string),
           messageData.content,
           'audio',
           uploadData.media_url,
         );
+        const message: Message = {
+          id: res.id,
+          conversation_id: res.conversation_id,
+          content: res.content,
+          content_type: 'audio',
+          media_url: res.media_url,
+          is_read: false,
+          created_at: res.created_at,
+          sender: {
+            id: currentUserId || 0,
+            username: '',
+            first_name: '',
+            last_name: '',
+            profile_photo: undefined,
+          },
+        };
+        setMessages((prev) => [...prev, message]);
       }
     } catch (error) {
       console.error('Error sending audio:', error);
@@ -591,12 +634,29 @@ export default function ChatScreen() {
       if (socket) {
         socket.emit('chat_message', messageData);
       } else {
-        await sendChatMessage(
+        const res = await sendChatMessage(
           parseInt(id as string),
           messageData.content,
           'audio',
           uploadData.media_url,
         );
+        const message: Message = {
+          id: res.id,
+          conversation_id: res.conversation_id,
+          content: res.content,
+          content_type: 'audio',
+          media_url: res.media_url,
+          is_read: false,
+          created_at: res.created_at,
+          sender: {
+            id: currentUserId || 0,
+            username: '',
+            first_name: '',
+            last_name: '',
+            profile_photo: undefined,
+          },
+        };
+        setMessages((prev) => [...prev, message]);
       }
     } catch (error) {
       console.error('Error sending audio:', error);
@@ -625,12 +685,29 @@ export default function ChatScreen() {
       if (socket) {
         socket.emit('chat_message', messageData);
       } else {
-        await sendChatMessage(
+        const res = await sendChatMessage(
           parseInt(id as string),
           messageData.content,
           'image',
           uploadData.media_url,
         );
+        const message: Message = {
+          id: res.id,
+          conversation_id: res.conversation_id,
+          content: res.content,
+          content_type: 'image',
+          media_url: res.media_url,
+          is_read: false,
+          created_at: res.created_at,
+          sender: {
+            id: currentUserId || 0,
+            username: '',
+            first_name: '',
+            last_name: '',
+            profile_photo: undefined,
+          },
+        };
+        setMessages((prev) => [...prev, message]);
       }
     } catch (error) {
       console.error('Error sending video:', error);
