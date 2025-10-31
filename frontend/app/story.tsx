@@ -331,7 +331,7 @@ const StoryCard = ({ item, onPress }: { item: StoryItem; onPress: () => void }) 
   </TouchableOpacity>
 );
 
-const CompactPreview = ({ item, onPress }) => (
+const CompactPreview = ({ item, onPress }: { item: StoryItem; onPress: () => void }) => (
   <TouchableOpacity
     activeOpacity={0.9}
     onPress={onPress}
