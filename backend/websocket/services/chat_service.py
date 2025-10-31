@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import and_, or_, func
 from database.models import Conversation, Message, User, message_reads
 from database.session import SessionLocal
@@ -35,7 +35,9 @@ class ChatService:
         """Get conversation by ID"""
         db = SessionLocal()
         try:
-            return db.query(Conversation).filter(
+            return db.query(Conversation).options(
+                selectinload(Conversation.participants)
+            ).filter(
                 and_(
                     Conversation.id == conversation_id,
                     Conversation.deleted_at == None
@@ -49,7 +51,10 @@ class ChatService:
         """Get all conversations for a user"""
         db = SessionLocal()
         try:
-            conversations = db.query(Conversation).join(
+            conversations = db.query(Conversation).options(
+                selectinload(Conversation.participants),
+                selectinload(Conversation.messages)
+            ).join(
                 Conversation.participants
             ).filter(
                 and_(
@@ -69,7 +74,10 @@ class ChatService:
         db = SessionLocal()
         try:
             search_query = f"%{query}%"
-            conversations = db.query(Conversation).join(
+            conversations = db.query(Conversation).options(
+                selectinload(Conversation.participants),
+                selectinload(Conversation.messages)
+            ).join(
                 Conversation.participants
             ).filter(
                 and_(
@@ -89,7 +97,9 @@ class ChatService:
         """Update conversation details"""
         db = SessionLocal()
         try:
-            conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+            conversation = db.query(Conversation).options(
+                selectinload(Conversation.participants)
+            ).filter(Conversation.id == conversation_id).first()
             if conversation:
                 if name:
                     conversation.name = name
@@ -109,7 +119,9 @@ class ChatService:
         """Soft delete a conversation"""
         db = SessionLocal()
         try:
-            conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
+            conversation = db.query(Conversation).options(
+                selectinload(Conversation.participants)
+            ).filter(Conversation.id == conversation_id).first()
             if conversation:
                 conversation.deleted_at = datetime.utcnow()
                 db.commit()
