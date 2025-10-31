@@ -742,12 +742,26 @@ export default function ChatScreen() {
           </TouchableOpacity>
 
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>{getConversationTitle}</Text>
-            {conversation?.is_group && (
-              <Text style={styles.headerSubtitle}>
-                {conversation.participants.length} participantes
-              </Text>
+            {conversation && !conversation.is_group && conversation.participants.length > 0 && (
+              <Image
+                source={{
+                  uri:
+                    conversation.participants[0]?.profile_photo ||
+                    `https://i.pravatar.cc/150?u=${conversation.participants[0]?.id}`,
+                }}
+                style={styles.headerAvatar}
+              />
             )}
+            <View style={styles.headerTextContainer}>
+              <Text style={styles.headerTitle}>{getConversationTitle}</Text>
+              {conversation?.is_group ? (
+                <Text style={styles.headerSubtitle}>
+                  {conversation.participants.length} participantes
+                </Text>
+              ) : (
+                <Text style={styles.headerSubtitle}>Online</Text>
+              )}
+            </View>
           </View>
 
           <View style={styles.headerActions}>
