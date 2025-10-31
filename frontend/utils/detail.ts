@@ -1,6 +1,11 @@
 import { ApiPost, getPostById, getUserById } from './api';
 
-export type DetailType = 'post' | 'profile_photo' | 'profile_cover' | 'video' | 'unknown';
+export type DetailType =
+  | 'post'
+  | 'profile_photo'
+  | 'profile_cover'
+  | 'video'
+  | 'unknown';
 
 export type ParsedId = {
   original: string;
@@ -42,7 +47,9 @@ export function parseDetailId(input: string): ParsedId {
   return { original: v, type: 'profile_photo', id: v };
 }
 
-export async function fetchDetailData(parsed: ParsedId): Promise<{ post?: ApiPost | null; originalId: string }> {
+export async function fetchDetailData(
+  parsed: ParsedId,
+): Promise<{ post?: ApiPost | null; originalId: string }> {
   // Try to resolve into an ApiPost object for the detail view
   try {
     if (parsed.type === 'post') {
@@ -76,10 +83,15 @@ export async function fetchDetailData(parsed: ParsedId): Promise<{ post?: ApiPos
       const pseudo: ApiPost = {
         id: 0,
         content: '',
-        media_url: parsed.type === 'profile_photo' ? user.profile_photo ?? null : user.cover_photo ?? null,
+        media_url:
+          parsed.type === 'profile_photo'
+            ? (user.profile_photo ?? null)
+            : (user.cover_photo ?? null),
         created_at: user.created_at || new Date().toISOString(),
         user_id: user.id,
-        user_name: user.username || `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+        user_name:
+          user.username ||
+          `${user.first_name || ''} ${user.last_name || ''}`.trim(),
         user_profile_photo: user.profile_photo || null,
       };
       return { post: pseudo, originalId: parsed.original };

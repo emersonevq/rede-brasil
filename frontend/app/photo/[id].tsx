@@ -25,7 +25,9 @@ export default function PhotoView() {
   const [error, setError] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
-  const [comments, setComments] = useState<{ id: string; user: string; text: string }[]>([]);
+  const [comments, setComments] = useState<
+    { id: string; user: string; text: string }[]
+  >([]);
   const [commentText, setCommentText] = useState('');
 
   useEffect(() => {
@@ -67,7 +69,9 @@ export default function PhotoView() {
   if (error || !photoUrl) {
     return (
       <SafeAreaView style={styles.centered}>
-        <Text style={{ color: '#374151' }}>{error || 'Foto não disponível'}</Text>
+        <Text style={{ color: '#374151' }}>
+          {error || 'Foto não disponível'}
+        </Text>
       </SafeAreaView>
     );
   }
@@ -87,7 +91,11 @@ export default function PhotoView() {
         keyExtractor={(item) => item.id}
         ListHeaderComponent={() => (
           <View style={styles.mediaContainer}>
-            <Image source={{ uri: photoUrl }} style={styles.media} resizeMode="contain" />
+            <Image
+              source={{ uri: photoUrl }}
+              style={styles.media}
+              resizeMode="contain"
+            />
           </View>
         )}
         renderItem={({ item }) => (
@@ -104,7 +112,10 @@ export default function PhotoView() {
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120 }}
       />
 
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.commentBox}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.commentBox}
+      >
         <TextInput
           placeholder="Adicione um comentário..."
           placeholderTextColor="#94a3b8"
@@ -114,7 +125,11 @@ export default function PhotoView() {
           returnKeyType="send"
           onSubmitEditing={handleAddComment}
         />
-        <TouchableOpacity onPress={handleAddComment} style={styles.sendBtn} activeOpacity={0.8}>
+        <TouchableOpacity
+          onPress={handleAddComment}
+          style={styles.sendBtn}
+          activeOpacity={0.8}
+        >
           <Text style={styles.sendText}>Enviar</Text>
         </TouchableOpacity>
       </KeyboardAvoidingView>
@@ -124,17 +139,74 @@ export default function PhotoView() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#ffffff' },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#0f172a', marginLeft: 12 },
-  mediaContainer: { padding: 16, alignItems: 'center', backgroundColor: '#ffffff' },
-  media: { width: '100%', height: 360, borderRadius: 12, backgroundColor: '#e2e8f0' },
-  commentRow: { flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f8fafc' },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginLeft: 12,
+  },
+  mediaContainer: {
+    padding: 16,
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
+  media: {
+    width: '100%',
+    height: 360,
+    borderRadius: 12,
+    backgroundColor: '#e2e8f0',
+  },
+  commentRow: {
+    flexDirection: 'row',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f8fafc',
+  },
   commentUser: { fontWeight: '700', color: '#0f172a' },
   commentText: { color: '#374151', marginLeft: 6 },
   emptyComments: { padding: 20, alignItems: 'center' },
-  commentBox: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', padding: 12, backgroundColor: '#ffffff', borderTopWidth: 1, borderTopColor: '#f1f5f9' },
-  commentInput: { flex: 1, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8, marginRight: 8, backgroundColor: '#f8fafc' },
-  sendBtn: { backgroundColor: '#3b82f6', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  commentBox: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    padding: 12,
+    backgroundColor: '#ffffff',
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  commentInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 8,
+    backgroundColor: '#f8fafc',
+  },
+  sendBtn: {
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   sendText: { color: '#ffffff', fontWeight: '700' },
 });

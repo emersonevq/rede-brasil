@@ -93,7 +93,9 @@ export default function DetailView() {
       try {
         setLoading(true);
         setError(null);
-        const { parseDetailId, fetchDetailData } = await import('../../utils/detail');
+        const { parseDetailId, fetchDetailData } = await import(
+          '../../utils/detail'
+        );
         const parsed = parseDetailId(id);
         const { post: data } = await fetchDetailData(parsed);
 
