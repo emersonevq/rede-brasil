@@ -163,6 +163,13 @@ class ChatService:
 
             db.commit()
             db.refresh(message)
+
+            # Reload with eager loading of relationships before returning
+            message = db.query(Message).options(
+                selectinload(Message.sender),
+                selectinload(Message.read_by)
+            ).filter(Message.id == message.id).first()
+
             return message
         finally:
             db.close()
@@ -172,7 +179,10 @@ class ChatService:
         """Get messages from a conversation"""
         db = SessionLocal()
         try:
-            messages = db.query(Message).filter(
+            messages = db.query(Message).options(
+                selectinload(Message.sender),
+                selectinload(Message.read_by)
+            ).filter(
                 and_(
                     Message.conversation_id == conversation_id,
                     Message.is_deleted == False
@@ -190,7 +200,10 @@ class ChatService:
         db = SessionLocal()
         try:
             search_query = f"%{query}%"
-            messages = db.query(Message).filter(
+            messages = db.query(Message).options(
+                selectinload(Message.sender),
+                selectinload(Message.read_by)
+            ).filter(
                 and_(
                     Message.conversation_id == conversation_id,
                     Message.is_deleted == False,
@@ -208,7 +221,9 @@ class ChatService:
         """Mark a message as read by a user"""
         db = SessionLocal()
         try:
-            message = db.query(Message).filter(Message.id == message_id).first()
+            message = db.query(Message).options(
+                selectinload(Message.read_by)
+            ).filter(Message.id == message_id).first()
             if message:
                 # Add user to read_by if not already there
                 user = db.query(User).filter(User.id == user_id).first()
@@ -216,6 +231,12 @@ class ChatService:
                     message.read_by.append(user)
                     db.commit()
                     db.refresh(message)
+
+                    # Reload with eager loading before returning
+                    message = db.query(Message).options(
+                        selectinload(Message.sender),
+                        selectinload(Message.read_by)
+                    ).filter(Message.id == message.id).first()
             return message
         finally:
             db.close()
@@ -264,7 +285,10 @@ class ChatService:
         """Soft delete a message"""
         db = SessionLocal()
         try:
-            message = db.query(Message).filter(Message.id == message_id).first()
+            message = db.query(Message).options(
+                selectinload(Message.sender),
+                selectinload(Message.read_by)
+            ).filter(Message.id == message_id).first()
             if message:
                 message.is_deleted = True
                 db.commit()
@@ -277,12 +301,21 @@ class ChatService:
         """Edit a message"""
         db = SessionLocal()
         try:
-            message = db.query(Message).filter(Message.id == message_id).first()
+            message = db.query(Message).options(
+                selectinload(Message.sender),
+                selectinload(Message.read_by)
+            ).filter(Message.id == message_id).first()
             if message:
                 message.content = content
                 message.edited_at = datetime.utcnow()
                 db.commit()
                 db.refresh(message)
+
+                # Reload with eager loading before returning
+                message = db.query(Message).options(
+                    selectinload(Message.sender),
+                    selectinload(Message.read_by)
+                ).filter(Message.id == message.id).first()
             return message
         finally:
             db.close()
