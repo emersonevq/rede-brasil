@@ -9,6 +9,7 @@ class UserProfile(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True)
+    unique_id: Mapped[str | None] = mapped_column(String(10), unique=True, nullable=True, index=True)
 
     bio: Mapped[str | None] = mapped_column(Text, nullable=True)
     hometown: Mapped[str | None] = mapped_column(String(100), nullable=True)

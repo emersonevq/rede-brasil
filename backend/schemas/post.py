@@ -12,6 +12,7 @@ class PostOut(BaseModel):
     created_at: datetime
     user_id: int
     user_name: str
+    unique_id: str
     user_profile_photo: str | None = None
     user_cover_photo: str | None = None
 

@@ -3,14 +3,21 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import DetailView from '../../components/DetailView';
 import type { ApiPost } from '../../utils/api';
 
-export default function DetailPage() {
+export default function UniversalDetailPage() {
   const params = useLocalSearchParams();
   const router = useRouter();
-  const id = String(params.id ?? '');
+
+  // params.params is an array when using [...params]
+  const paramsArray = Array.isArray(params.params)
+    ? params.params
+    : params.params
+      ? [params.params]
+      : [];
 
   const [post, setPost] = useState<ApiPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [title, setTitle] = useState('Publicação');
 
   useEffect(() => {
     let mounted = true;
@@ -18,10 +25,41 @@ export default function DetailPage() {
       try {
         setLoading(true);
         setError(null);
+
         const { parseDetailId, fetchDetailData } = await import(
           '../../utils/detail'
         );
-        const parsed = parseDetailId(id);
+
+        // Reconstruct the original path from params
+        const pathString = paramsArray.join('/');
+
+        if (!pathString) {
+          throw new Error('ID not provided');
+        }
+
+        const parsed = parseDetailId(pathString);
+
+        // Set title based on type
+        switch (parsed.type) {
+          case 'profile_photo':
+            setTitle('Foto de Perfil');
+            break;
+          case 'profile_cover':
+            setTitle('Capa de Perfil');
+            break;
+          case 'video':
+            setTitle('Vídeo');
+            break;
+          case 'story':
+            setTitle('História');
+            break;
+          case 'post':
+            setTitle('Post');
+            break;
+          default:
+            setTitle('Publicação');
+        }
+
         const { post: data } = await fetchDetailData(parsed);
 
         if (!mounted) return;
@@ -37,7 +75,7 @@ export default function DetailPage() {
     return () => {
       mounted = false;
     };
-  }, [id]);
+  }, [paramsArray.join('/')]);
 
   return (
     <DetailView
@@ -45,7 +83,7 @@ export default function DetailPage() {
       loading={loading}
       error={error}
       onBack={() => router.back()}
-      title="Publicação"
+      title={title}
     />
   );
 }

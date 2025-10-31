@@ -6,6 +6,7 @@ from schemas.post import PostOut
 from schemas.profile import ProfileOut, ProfileUpdate
 from dependencies import get_current_user
 from database.models import User, Post, UserProfile, UserPosition, UserEducation
+from core.unique_id import generate_unique_profile_id
 import os
 import uuid
 from pathlib import Path
@@ -73,6 +74,7 @@ async def get_user_posts(user_id: str, db: Session = Depends(get_db)):
             created_at=p.created_at,
             user_id=p.user_id,
             user_name=f"{p.author.first_name} {p.author.last_name}" if p.author else "Anônimo",
+            unique_id=p.unique_id,
             user_profile_photo=p.author.profile_photo if p.author else None,
             user_cover_photo=p.author.cover_photo if p.author else None,
         ) for p in posts
@@ -97,6 +99,16 @@ async def update_profile_photo(
         media_url = f"/media/{unique_filename}"
         current.profile_photo = media_url
         db.add(current)
+
+        # Generate unique_id for profile if not already set
+        profile = db.query(UserProfile).filter(UserProfile.user_id == current.id).first()
+        if not profile:
+            profile = UserProfile(user_id=current.id, unique_id=generate_unique_profile_id(db))
+            db.add(profile)
+        elif not profile.unique_id:
+            profile.unique_id = generate_unique_profile_id(db)
+            db.add(profile)
+
         db.commit()
         db.refresh(current)
 
@@ -130,6 +142,16 @@ async def update_cover_photo(
         media_url = f"/media/{unique_filename}"
         current.cover_photo = media_url
         db.add(current)
+
+        # Generate unique_id for profile if not already set
+        profile = db.query(UserProfile).filter(UserProfile.user_id == current.id).first()
+        if not profile:
+            profile = UserProfile(user_id=current.id, unique_id=generate_unique_profile_id(db))
+            db.add(profile)
+        elif not profile.unique_id:
+            profile.unique_id = generate_unique_profile_id(db)
+            db.add(profile)
+
         db.commit()
         db.refresh(current)
 

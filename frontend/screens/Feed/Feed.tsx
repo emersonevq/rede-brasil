@@ -39,6 +39,7 @@ export default function FeedScreen() {
           likes: 0,
           liked: false,
           comments: [],
+          uniqueId: p.unique_id,
         }));
         setPosts(mapped);
       } catch (e) {
@@ -79,6 +80,7 @@ export default function FeedScreen() {
           likes: 0,
           liked: false,
           comments: [],
+          uniqueId: p.unique_id,
         }));
         setPosts(mapped);
       } catch {
@@ -136,14 +138,19 @@ export default function FeedScreen() {
         <FlatList
           data={posts}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <PostCard
-              post={item}
-              onLike={handleLike}
-              onOpen={(id) => router.push(`/detail/${id}`)}
-              onOpenProfile={handleOpenProfile}
-            />
-          )}
+          renderItem={({ item }) => {
+            const detailUrl = item.uniqueId
+              ? `/detail/post-${item.id}-${item.uniqueId}`
+              : `/detail/${item.id}`;
+            return (
+              <PostCard
+                post={item}
+                onLike={handleLike}
+                onOpen={() => router.push(detailUrl)}
+                onOpenProfile={handleOpenProfile}
+              />
+            );
+          }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }

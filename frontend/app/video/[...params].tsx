@@ -2,11 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import DetailView from '../../components/DetailView';
 import type { ApiPost } from '../../utils/api';
+import { getPostById } from '../../utils/api';
 
-export default function DetailPage() {
+export default function VideoDetailPage() {
   const params = useLocalSearchParams();
   const router = useRouter();
-  const id = String(params.id ?? '');
+
+  const paramsArray = Array.isArray(params.params)
+    ? params.params
+    : params.params
+      ? [params.params]
+      : [];
 
   const [post, setPost] = useState<ApiPost | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,18 +24,25 @@ export default function DetailPage() {
       try {
         setLoading(true);
         setError(null);
-        const { parseDetailId, fetchDetailData } = await import(
-          '../../utils/detail'
-        );
-        const parsed = parseDetailId(id);
-        const { post: data } = await fetchDetailData(parsed);
+
+        const pathString = paramsArray.join('/');
+
+        if (!pathString) {
+          throw new Error('ID not provided');
+        }
+
+        // Extract ID from path (format: video-123456 or just 123456)
+        const idMatch = pathString.match(/(?:video-)?(\d+)/);
+        const id = idMatch ? idMatch[1] : pathString;
+
+        const data = await getPostById(id);
 
         if (!mounted) return;
 
         setPost(data);
       } catch (e: any) {
         if (!mounted) return;
-        setError(e?.message || 'Falha ao carregar publicação');
+        setError(e?.message || 'Falha ao carregar vídeo');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -37,7 +50,7 @@ export default function DetailPage() {
     return () => {
       mounted = false;
     };
-  }, [id]);
+  }, [paramsArray.join('/')]);
 
   return (
     <DetailView
@@ -45,7 +58,7 @@ export default function DetailPage() {
       loading={loading}
       error={error}
       onBack={() => router.back()}
-      title="Publicação"
+      title="Vídeo"
     />
   );
 }

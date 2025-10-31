@@ -114,6 +114,7 @@ export type ApiPost = {
   created_at: string;
   user_id: number;
   user_name: string;
+  unique_id: string;
   user_profile_photo?: string | null;
   user_cover_photo?: string | null;
 };
