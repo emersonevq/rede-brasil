@@ -290,8 +290,8 @@ class ChatService:
             for conversation in conversations:
                 participant_ids = {p.id for p in conversation.participants}
                 if participant_ids == {user_id_1, user_id_2}:
-                    # Expunge and return - data is already loaded in memory
-                    db.expunge_all()
+                    # Force load all participant data into memory before detaching
+                    _ = [p.id for p in conversation.participants]
                     return conversation
 
             # If no conversation found, create a new one
@@ -304,8 +304,8 @@ class ChatService:
             db.add(conversation)
             db.commit()
             db.refresh(conversation)
-            # Expunge to detach from session but keep data in memory
-            db.expunge_all()
+            # Force load all participant data into memory
+            _ = [p.id for p in conversation.participants]
             return conversation
         finally:
             db.close()
