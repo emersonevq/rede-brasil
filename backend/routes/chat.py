@@ -20,6 +20,19 @@ chat_service = ChatService()
 
 def format_conversation(conv: Conversation, current_user_id: int):
     """Format conversation object for API response"""
+    from sqlalchemy.orm import object_session
+
+    # Get the session for this object if it still exists
+    session = object_session(conv)
+    if session:
+        # If still in session, eager load any pending relationships
+        from sqlalchemy.orm import selectinload
+        if not hasattr(conv.participants, '_loaded_value'):
+            try:
+                conv.participants  # trigger load
+            except:
+                pass
+
     unread_count = chat_service.get_unread_count(
         conversation_id=conv.id,
         user_id=current_user_id
