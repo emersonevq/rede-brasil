@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 from database.session import get_db
 from database.models import User, Conversation, Message
 from schemas.conversation import (
@@ -20,6 +21,19 @@ chat_service = ChatService()
 
 def format_conversation(conv: Conversation, current_user_id: int):
     """Format conversation object for API response"""
+    from sqlalchemy.orm import object_session
+
+    # Get the session for this object if it still exists
+    session = object_session(conv)
+    if session:
+        # If still in session, eager load any pending relationships
+        from sqlalchemy.orm import selectinload
+        if not hasattr(conv.participants, '_loaded_value'):
+            try:
+                conv.participants  # trigger load
+            except:
+                pass
+
     unread_count = chat_service.get_unread_count(
         conversation_id=conv.id,
         user_id=current_user_id
@@ -78,13 +92,82 @@ async def get_conversations(
     offset: int = 0,
 ):
     """Get all conversations for the current user"""
-    conversations = chat_service.get_user_conversations(
-        user_id=current_user.id,
-        limit=limit,
-        offset=offset
-    )
+    from database.session import SessionLocal
+    from sqlalchemy.orm import selectinload
 
-    return [format_conversation(conv, current_user.id) for conv in conversations]
+    db = SessionLocal()
+    try:
+        conversations = db.query(Conversation).options(
+            selectinload(Conversation.participants),
+            selectinload(Conversation.messages).selectinload(Message.sender),
+            selectinload(Conversation.messages).selectinload(Message.read_by)
+        ).join(
+            Conversation.participants
+        ).filter(
+            and_(
+                User.id == current_user.id,
+                Conversation.deleted_at == None
+            )
+        ).order_by(
+            Conversation.updated_at.desc()
+        ).limit(limit).offset(offset).all()
+
+        result = []
+        for conv in conversations:
+            unread_count = chat_service.get_unread_count(
+                conversation_id=conv.id,
+                user_id=current_user.id
+            )
+
+            latest_message = None
+            if conv.messages:
+                latest_msg = conv.messages[-1]
+                read_by_ids = [u.id for u in latest_msg.read_by]
+                latest_message = {
+                    "id": latest_msg.id,
+                    "content": latest_msg.content,
+                    "content_type": latest_msg.content_type,
+                    "media_url": latest_msg.media_url,
+                    "is_deleted": latest_msg.is_deleted,
+                    "edited_at": latest_msg.edited_at.isoformat() if latest_msg.edited_at else None,
+                    "created_at": latest_msg.created_at.isoformat(),
+                    "read_by": read_by_ids,
+                    "sender": {
+                        "id": latest_msg.sender.id,
+                        "username": latest_msg.sender.username,
+                        "first_name": latest_msg.sender.first_name,
+                        "last_name": latest_msg.sender.last_name,
+                        "profile_photo": latest_msg.sender.profile_photo,
+                    }
+                }
+
+            participants = [
+                {
+                    "id": p.id,
+                    "username": p.username,
+                    "first_name": p.first_name,
+                    "last_name": p.last_name,
+                    "profile_photo": p.profile_photo,
+                }
+                for p in conv.participants
+            ]
+
+            result.append({
+                "id": conv.id,
+                "name": conv.name,
+                "description": conv.description,
+                "is_group": conv.is_group,
+                "avatar_url": conv.avatar_url,
+                "participants": participants,
+                "latest_message": latest_message,
+                "unread_count": unread_count,
+                "created_at": conv.created_at.isoformat(),
+                "updated_at": conv.updated_at.isoformat(),
+            })
+
+        return result
+    finally:
+        db.close()
 
 
 @router.get("/conversations/{conversation_id}")
@@ -94,16 +177,78 @@ async def get_conversation(
 ):
     """Get a single conversation by ID"""
     try:
-        conversation = chat_service.get_conversation(conversation_id)
-        if not conversation:
-            raise HTTPException(status_code=404, detail="Conversation not found")
+        from database.session import SessionLocal
+        from sqlalchemy.orm import selectinload
 
-        # Check if user is a participant
-        participant_ids = [p.id for p in conversation.participants]
-        if current_user.id not in participant_ids:
-            raise HTTPException(status_code=403, detail="Not a participant of this conversation")
+        db = SessionLocal()
+        try:
+            conversation = db.query(Conversation).options(
+                selectinload(Conversation.participants),
+                selectinload(Conversation.messages).selectinload(Message.sender),
+                selectinload(Conversation.messages).selectinload(Message.read_by)
+            ).filter(Conversation.id == conversation_id).first()
 
-        return format_conversation(conversation, current_user.id)
+            if not conversation:
+                raise HTTPException(status_code=404, detail="Conversation not found")
+
+            # Check if user is a participant - do this while session is active
+            participant_ids = [p.id for p in conversation.participants]
+            if current_user.id not in participant_ids:
+                raise HTTPException(status_code=403, detail="Not a participant of this conversation")
+
+            # Format while session is still active
+            unread_count = chat_service.get_unread_count(
+                conversation_id=conversation.id,
+                user_id=current_user.id
+            )
+
+            latest_message = None
+            if conversation.messages:
+                latest_msg = conversation.messages[-1]
+                read_by_ids = [u.id for u in latest_msg.read_by]
+                latest_message = {
+                    "id": latest_msg.id,
+                    "content": latest_msg.content,
+                    "content_type": latest_msg.content_type,
+                    "media_url": latest_msg.media_url,
+                    "is_deleted": latest_msg.is_deleted,
+                    "edited_at": latest_msg.edited_at.isoformat() if latest_msg.edited_at else None,
+                    "created_at": latest_msg.created_at.isoformat(),
+                    "read_by": read_by_ids,
+                    "sender": {
+                        "id": latest_msg.sender.id,
+                        "username": latest_msg.sender.username,
+                        "first_name": latest_msg.sender.first_name,
+                        "last_name": latest_msg.sender.last_name,
+                        "profile_photo": latest_msg.sender.profile_photo,
+                    }
+                }
+
+            participants = [
+                {
+                    "id": p.id,
+                    "username": p.username,
+                    "first_name": p.first_name,
+                    "last_name": p.last_name,
+                    "profile_photo": p.profile_photo,
+                }
+                for p in conversation.participants
+            ]
+
+            return {
+                "id": conversation.id,
+                "name": conversation.name,
+                "description": conversation.description,
+                "is_group": conversation.is_group,
+                "avatar_url": conversation.avatar_url,
+                "participants": participants,
+                "latest_message": latest_message,
+                "unread_count": unread_count,
+                "created_at": conversation.created_at.isoformat(),
+                "updated_at": conversation.updated_at.isoformat(),
+            }
+        finally:
+            db.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -117,13 +262,84 @@ async def search_conversations(
     limit: int = 20,
 ):
     """Search conversations by name"""
-    conversations = chat_service.search_conversations(
-        user_id=current_user.id,
-        query=q,
-        limit=limit
-    )
+    from database.session import SessionLocal
+    from sqlalchemy.orm import selectinload
 
-    return [format_conversation(conv, current_user.id) for conv in conversations]
+    db = SessionLocal()
+    try:
+        search_query = f"%{q}%"
+        conversations = db.query(Conversation).options(
+            selectinload(Conversation.participants),
+            selectinload(Conversation.messages).selectinload(Message.sender),
+            selectinload(Conversation.messages).selectinload(Message.read_by)
+        ).join(
+            Conversation.participants
+        ).filter(
+            and_(
+                User.id == current_user.id,
+                Conversation.deleted_at == None,
+                Conversation.name.ilike(search_query)
+            )
+        ).order_by(
+            Conversation.updated_at.desc()
+        ).limit(limit).all()
+
+        result = []
+        for conv in conversations:
+            unread_count = chat_service.get_unread_count(
+                conversation_id=conv.id,
+                user_id=current_user.id
+            )
+
+            latest_message = None
+            if conv.messages:
+                latest_msg = conv.messages[-1]
+                read_by_ids = [u.id for u in latest_msg.read_by]
+                latest_message = {
+                    "id": latest_msg.id,
+                    "content": latest_msg.content,
+                    "content_type": latest_msg.content_type,
+                    "media_url": latest_msg.media_url,
+                    "is_deleted": latest_msg.is_deleted,
+                    "edited_at": latest_msg.edited_at.isoformat() if latest_msg.edited_at else None,
+                    "created_at": latest_msg.created_at.isoformat(),
+                    "read_by": read_by_ids,
+                    "sender": {
+                        "id": latest_msg.sender.id,
+                        "username": latest_msg.sender.username,
+                        "first_name": latest_msg.sender.first_name,
+                        "last_name": latest_msg.sender.last_name,
+                        "profile_photo": latest_msg.sender.profile_photo,
+                    }
+                }
+
+            participants = [
+                {
+                    "id": p.id,
+                    "username": p.username,
+                    "first_name": p.first_name,
+                    "last_name": p.last_name,
+                    "profile_photo": p.profile_photo,
+                }
+                for p in conv.participants
+            ]
+
+            result.append({
+                "id": conv.id,
+                "name": conv.name,
+                "description": conv.description,
+                "is_group": conv.is_group,
+                "avatar_url": conv.avatar_url,
+                "participants": participants,
+                "latest_message": latest_message,
+                "unread_count": unread_count,
+                "created_at": conv.created_at.isoformat(),
+                "updated_at": conv.updated_at.isoformat(),
+            })
+
+        return result
+    finally:
+        db.close()
 
 
 @router.post("/conversations")
@@ -213,14 +429,24 @@ async def get_messages(
     offset: int = 0,
 ):
     """Get messages from a conversation"""
-    conversation = chat_service.get_conversation(conversation_id)
-    if not conversation:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+    from database.session import SessionLocal
+    from sqlalchemy.orm import selectinload
 
-    # Check if user is a participant
-    participant_ids = [p.id for p in conversation.participants]
-    if current_user.id not in participant_ids:
-        raise HTTPException(status_code=403, detail="Not a participant of this conversation")
+    db = SessionLocal()
+    try:
+        conversation = db.query(Conversation).options(
+            selectinload(Conversation.participants)
+        ).filter(Conversation.id == conversation_id).first()
+
+        if not conversation:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+
+        # Check if user is a participant
+        participant_ids = [p.id for p in conversation.participants]
+        if current_user.id not in participant_ids:
+            raise HTTPException(status_code=403, detail="Not a participant of this conversation")
+    finally:
+        db.close()
 
     # Mark messages as read
     chat_service.mark_conversation_messages_as_read(conversation_id, current_user.id)
@@ -536,14 +762,25 @@ async def create_message(
 ):
     """Create a new message via REST (used as fallback if WebSocket fails)"""
     try:
-        conversation = chat_service.get_conversation(data.conversation_id)
-        if not conversation:
-            raise HTTPException(status_code=404, detail="Conversation not found")
+        from database.session import SessionLocal
+        from sqlalchemy.orm import selectinload
 
-        # Check if user is a participant
-        participant_ids = [p.id for p in conversation.participants]
-        if current_user.id not in participant_ids:
-            raise HTTPException(status_code=403, detail="Not a participant of this conversation")
+        db = SessionLocal()
+        try:
+            # Check if conversation exists and user is a participant
+            conversation = db.query(Conversation).options(
+                selectinload(Conversation.participants)
+            ).filter(Conversation.id == data.conversation_id).first()
+
+            if not conversation:
+                raise HTTPException(status_code=404, detail="Conversation not found")
+
+            # Check if user is a participant
+            participant_ids = [p.id for p in conversation.participants]
+            if current_user.id not in participant_ids:
+                raise HTTPException(status_code=403, detail="Not a participant of this conversation")
+        finally:
+            db.close()
 
         message = chat_service.create_message(
             conversation_id=data.conversation_id,

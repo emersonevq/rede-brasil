@@ -16,9 +16,6 @@ export function initializeSocket() {
   }
 
   const token = getToken();
-  if (!token) {
-    return null;
-  }
 
   socket = io(API_BASE_URL, {
     path: '/socket.io/',
@@ -27,9 +24,7 @@ export function initializeSocket() {
     reconnectionDelayMax: 5000,
     reconnectionAttempts: 5,
     reconnectionDelayJitter: true,
-    auth: {
-      token: token,
-    },
+    auth: token ? { token: token } : undefined,
     transports: ['websocket', 'polling'],
   });
 

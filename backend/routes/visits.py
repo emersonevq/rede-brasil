@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, timedelta
-import asyncio
 
 from database.session import get_db
 from dependencies import get_current_user
@@ -13,7 +12,7 @@ from core.websocket import emit_visit_notification
 router = APIRouter()
 
 @router.post("/", response_model=VisitOut)
-def record_visit(payload: VisitCreate, current: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def record_visit(payload: VisitCreate, current: User = Depends(get_current_user), db: Session = Depends(get_db)):
     visited_user_id = payload.visited_user_id
     if visited_user_id == current.id:
         raise HTTPException(status_code=400, detail="Não é possível visitar seu próprio perfil")
@@ -27,15 +26,16 @@ def record_visit(payload: VisitCreate, current: User = Depends(get_current_user)
     db.commit()
     db.refresh(visit)
 
-    # Emit websocket notification
-    asyncio.create_task(
-        emit_visit_notification(
+    # Emit websocket notification asynchronously
+    try:
+        await emit_visit_notification(
             visited_user_id=visited_user_id,
             visitor_id=current.id,
             visitor_name=f"{current.first_name} {current.last_name}".strip() or current.username,
             visitor_avatar=current.profile_photo
         )
-    )
+    except Exception as e:
+        print(f"Error emitting visit notification: {e}")
 
     return visit
 

@@ -26,7 +26,11 @@ import {
 } from 'lucide-react-native';
 import BottomNav from '../../components/BottomNav';
 import TopBar from '../../components/TopBar';
-import { getConversations, deleteConversation } from '../../utils/api';
+import {
+  getConversations,
+  deleteConversation,
+  getCurrentUser,
+} from '../../utils/api';
 import { initializeSocket, getSocket } from '../../utils/websocket';
 
 const getDimensions = () => {
@@ -65,18 +69,31 @@ const ChatItem = ({
   item,
   onPress,
   onDelete,
+  currentUserId,
 }: {
   item: ChatItem;
   onPress: () => void;
   onDelete: (id: number) => void;
+  currentUserId?: number;
 }) => {
   const isUnread = item.unread_count > 0;
   const [showActions, setShowActions] = useState(false);
 
+  // Get the other participant (for DMs)
+  const getOtherParticipant = () => {
+    if (item.is_group) {
+      return item.participants[0];
+    }
+    return (
+      item.participants.find((p) => p.id !== currentUserId) ||
+      item.participants[0]
+    );
+  };
+
   // Get the other participant's name (for DMs)
   const getDisplayName = () => {
     if (item.name) return item.name;
-    const otherParticipant = item.participants[0];
+    const otherParticipant = getOtherParticipant();
     return `${otherParticipant.first_name} ${otherParticipant.last_name}`;
   };
 
@@ -133,8 +150,8 @@ const ChatItem = ({
           <Image
             source={{
               uri:
-                item.participants[0]?.profile_photo ||
-                `https://i.pravatar.cc/150?u=${item.participants[0]?.id}`,
+                getOtherParticipant()?.profile_photo ||
+                `https://i.pravatar.cc/150?u=${getOtherParticipant()?.id}`,
             }}
             style={styles.avatar}
           />
@@ -201,6 +218,21 @@ export default function MessagesScreen() {
   const [conversations, setConversations] = useState<ChatItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [unreadTotal, setUnreadTotal] = useState(0);
+  const [currentUserId, setCurrentUserId] = useState<number | undefined>();
+
+  // Get current user
+  useEffect(() => {
+    (async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          setCurrentUserId(user.id);
+        }
+      } catch (error) {
+        console.error('Error getting current user:', error);
+      }
+    })();
+  }, []);
 
   // Initialize socket
   useEffect(() => {
@@ -323,6 +355,7 @@ export default function MessagesScreen() {
               item={item}
               onPress={() => handleChatPress(item.id)}
               onDelete={handleDeleteConversation}
+              currentUserId={currentUserId}
             />
           )}
           contentContainerStyle={styles.chatList}
