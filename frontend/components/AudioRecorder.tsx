@@ -4,28 +4,43 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Modal,
-  SafeAreaView,
   ActivityIndicator,
+  PanResponder,
 } from 'react-native';
 import { Audio } from 'expo-av';
-import { Mic, Square, Play, Send, X } from 'lucide-react-native';
+import { Mic, Square, Send, X, Trash2 } from 'lucide-react-native';
 
 interface AudioRecorderProps {
   onAudioRecorded: (uri: string, duration: number) => void;
 }
 
 export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
-  const [isVisible, setIsVisible] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const recordingRef = useRef<Audio.Recording | null>(null);
-  const soundRef = useRef<Audio.Sound | null>(null);
   const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null,
+  );
+  const panResponderRef = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+      onPanResponderMove: () => {},
+      onPanResponderRelease: () => {
+        if (isRecording) {
+          stopRecording();
+        }
+      },
+      onPanResponderTerminate: () => {
+        if (isRecording) {
+          stopRecording();
+        }
+      },
+    }),
   );
 
   const requestAudioPermission = async () => {
@@ -114,12 +129,6 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
     }
   };
 
-  const onPlaybackStatusUpdate = (status: any) => {
-    if (status.didJustFinish) {
-      setIsPlaying(false);
-    }
-  };
-
   const sendAudio = async () => {
     try {
       if (!recordingUri) return;
@@ -127,13 +136,8 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
       setIsSaving(true);
       onAudioRecorded(recordingUri, recordingDuration);
 
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
-      }
-
       setRecordingUri(null);
       setRecordingDuration(0);
-      setIsVisible(false);
     } catch (error) {
       console.error('Error sending audio:', error);
       alert('Erro ao enviar áudio');
@@ -148,7 +152,6 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
     }
     setRecordingUri(null);
     setRecordingDuration(0);
-    setIsPlaying(false);
   };
 
   const formatDuration = (seconds: number) => {
@@ -157,138 +160,59 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  return (
-    <>
-      <TouchableOpacity
-        onPress={() => setIsVisible(true)}
-        style={styles.button}
-        activeOpacity={0.7}
-      >
-        <Mic size={20} color="#3b82f6" strokeWidth={2} />
-      </TouchableOpacity>
-
-      <Modal
-        visible={isVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => {
-          if (isRecording) {
-            stopRecording();
-          }
-          setIsVisible(false);
-          resetRecording();
-        }}
-      >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>Gravar Áudio</Text>
-            <TouchableOpacity
-              onPress={() => {
-                if (isRecording) {
-                  stopRecording();
-                }
-                setIsVisible(false);
-                resetRecording();
-              }}
-            >
-              <X size={24} color="#0f172a" strokeWidth={2} />
-            </TouchableOpacity>
+  // Show inline recording UI when recording or has a recording
+  if (isRecording || recordingUri) {
+    return (
+      <View style={styles.inlineContainer}>
+        <View style={styles.inlineRecordingBar}>
+          <View style={styles.recordingIndicator}>
+            <View style={[styles.recordingDot, styles.recordingDotActive]} />
+            <Text style={styles.recordingText}>
+              {isRecording
+                ? `Gravando... ${formatDuration(recordingDuration)}`
+                : `Áudio: ${formatDuration(recordingDuration)}`}
+            </Text>
           </View>
 
-          <View style={styles.content}>
-            {!recordingUri ? (
+          <View style={styles.inlineActionButtons}>
+            {recordingUri && !isRecording && (
               <>
-                <Text style={styles.durationDisplay}>
-                  {formatDuration(recordingDuration)}
-                </Text>
-
-                {isRecording && (
-                  <View style={styles.recordingIndicator}>
-                    <View
-                      style={[styles.recordingDot, styles.recordingDotActive]}
-                    />
-                    <Text style={styles.recordingText}>Gravando...</Text>
-                  </View>
-                )}
+                <TouchableOpacity
+                  style={styles.inlineButton}
+                  onPress={resetRecording}
+                >
+                  <Trash2 size={18} color="#ef4444" strokeWidth={2} />
+                </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[
-                    styles.recordButton,
-                    isRecording && styles.recordButtonActive,
-                  ]}
-                  onPress={isRecording ? stopRecording : startRecording}
+                  style={[styles.inlineButton, styles.sendInlineButton]}
+                  onPress={sendAudio}
+                  disabled={isSaving}
                 >
-                  {isRecording ? (
-                    <Square
-                      size={32}
-                      color="#fff"
-                      strokeWidth={2}
-                      fill="#ef4444"
-                    />
+                  {isSaving ? (
+                    <ActivityIndicator size="small" color="#fff" />
                   ) : (
-                    <Mic size={32} color="#fff" strokeWidth={2} />
+                    <Send size={18} color="#fff" strokeWidth={2} />
                   )}
                 </TouchableOpacity>
-
-                <Text style={styles.hint}>
-                  {isRecording
-                    ? 'Toque para parar'
-                    : 'Toque para começar a gravar'}
-                </Text>
-              </>
-            ) : (
-              <>
-                <Text style={styles.previewTitle}>Preview</Text>
-                <Text style={styles.durationDisplay}>
-                  {formatDuration(recordingDuration)}
-                </Text>
-
-                <TouchableOpacity
-                  style={[
-                    styles.playButton,
-                    isPlaying && styles.playButtonActive,
-                  ]}
-                  onPress={playRecording}
-                  disabled={isPlaying}
-                >
-                  <Play size={32} color="#fff" strokeWidth={2} fill="#fff" />
-                </TouchableOpacity>
-
-                <Text style={styles.hint}>
-                  {isPlaying ? 'Reproduzindo...' : 'Toque para ouvir'}
-                </Text>
-
-                <View style={styles.actionButtons}>
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => {
-                      resetRecording();
-                    }}
-                  >
-                    <Text style={styles.cancelButtonText}>Refazer</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.sendButton}
-                    onPress={sendAudio}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? (
-                      <ActivityIndicator size="small" color="#fff" />
-                    ) : (
-                      <>
-                        <Send size={20} color="#fff" strokeWidth={2} />
-                        <Text style={styles.sendButtonText}>Enviar</Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
-                </View>
               </>
             )}
           </View>
-        </SafeAreaView>
-      </Modal>
-    </>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <TouchableOpacity
+      {...panResponderRef.current.panHandlers}
+      onPress={startRecording}
+      onLongPress={startRecording}
+      style={styles.button}
+      activeOpacity={0.7}
+    >
+      <Mic size={20} color="#3b82f6" strokeWidth={2} />
+    </TouchableOpacity>
   );
 }
 
@@ -301,134 +225,53 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#f8fafc',
   },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#ffffff',
+  inlineContainer: {
+    width: '100%',
   },
-  header: {
+  inlineRecordingBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    gap: 24,
-  },
-  durationDisplay: {
-    fontSize: 48,
-    fontWeight: '700',
-    color: '#0f172a',
-    fontFamily: 'monospace',
-    letterSpacing: 2,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#f8fafc',
+    borderRadius: 8,
+    marginBottom: 8,
   },
   recordingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
   },
   recordingDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#cbd5e1',
   },
   recordingDotActive: {
     backgroundColor: '#ef4444',
   },
   recordingText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#ef4444',
   },
-  recordButton: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#3b82f6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  recordButtonActive: {
-    backgroundColor: '#ef4444',
-    shadowColor: '#ef4444',
-  },
-  playButton: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#3b82f6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  playButtonActive: {
-    opacity: 0.7,
-  },
-  hint: {
-    fontSize: 14,
-    color: '#64748b',
-    fontWeight: '500',
-  },
-  previewTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0f172a',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 24,
-    width: '100%',
-  },
-  cancelButton: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: '#f1f5f9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0f172a',
-  },
-  sendButton: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: '#3b82f6',
-    alignItems: 'center',
-    justifyContent: 'center',
+  inlineActionButtons: {
     flexDirection: 'row',
     gap: 8,
+    alignItems: 'center',
   },
-  sendButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+  inlineButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f1f5f9',
+  },
+  sendInlineButton: {
+    backgroundColor: '#3b82f6',
   },
 });

@@ -9,14 +9,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
-  SafeAreaView,
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Send, Plus, Smile, Mic, X } from 'lucide-react-native';
 import {
   getCurrentUser,
+  getConversation,
   getConversationMessages,
   uploadChatFile,
   API_BASE_URL,
@@ -27,8 +28,7 @@ import { getSocket } from '../../utils/websocket';
 import * as ImagePicker from 'expo-image-picker';
 import AudioRecorder from '../../components/AudioRecorder';
 import AudioPicker from '../../components/AudioPicker';
-import VideoRecorder from '../../components/VideoRecorder';
-import VideoPicker from '../../components/VideoPicker';
+import VideoMedia from '../../components/VideoMedia';
 
 const getDimensions = () => {
   if (Platform.OS === 'web') {
@@ -268,9 +268,14 @@ export default function ChatScreen() {
     const loadConversation = async () => {
       try {
         setIsLoading(true);
+        const conversationData = await getConversation(parseInt(id as string));
         const messages = await getConversationMessages(parseInt(id as string));
 
-        // Create a mock conversation object (in production this would come from API)
+        setConversation(conversationData);
+        setMessages(messages as unknown as Message[]);
+      } catch (error) {
+        console.error('Error loading conversation:', error);
+        // Fallback to creating empty conversation
         setConversation({
           id: parseInt(id as string),
           is_group: false,
@@ -278,10 +283,6 @@ export default function ChatScreen() {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
-
-        setMessages(messages as unknown as Message[]);
-      } catch (error) {
-        console.error('Error loading messages:', error);
       } finally {
         setIsLoading(false);
       }
@@ -604,40 +605,6 @@ export default function ChatScreen() {
     }
   };
 
-  const handleVideoRecorded = async (uri: string, duration: number) => {
-    try {
-      setIsSending(true);
-
-      const uploadData = await uploadChatFile({
-        uri,
-        type: 'video/mp4',
-        name: `video_${Date.now()}.mp4`,
-      });
-
-      const messageData = {
-        conversation_id: parseInt(id as string),
-        content: `🎥 Vídeo (${Math.floor(duration)}s)`,
-        content_type: 'image',
-        media_url: uploadData.media_url,
-      };
-
-      if (socket) {
-        socket.emit('chat_message', messageData);
-      } else {
-        await sendChatMessage(
-          parseInt(id as string),
-          messageData.content,
-          'image',
-          uploadData.media_url,
-        );
-      }
-    } catch (error) {
-      console.error('Error sending video:', error);
-    } finally {
-      setIsSending(false);
-    }
-  };
-
   const handleVideoSelected = async (uri: string, duration: number) => {
     try {
       setIsSending(true);
@@ -740,12 +707,28 @@ export default function ChatScreen() {
           </TouchableOpacity>
 
           <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>{getConversationTitle}</Text>
-            {conversation?.is_group && (
-              <Text style={styles.headerSubtitle}>
-                {conversation.participants.length} participantes
-              </Text>
-            )}
+            {conversation &&
+              !conversation.is_group &&
+              conversation.participants.length > 0 && (
+                <Image
+                  source={{
+                    uri:
+                      conversation.participants[0]?.profile_photo ||
+                      `https://i.pravatar.cc/150?u=${conversation.participants[0]?.id}`,
+                  }}
+                  style={styles.headerAvatar}
+                />
+              )}
+            <View style={styles.headerTextContainer}>
+              <Text style={styles.headerTitle}>{getConversationTitle}</Text>
+              {conversation?.is_group ? (
+                <Text style={styles.headerSubtitle}>
+                  {conversation.participants.length} participantes
+                </Text>
+              ) : (
+                <Text style={styles.headerSubtitle}>Online</Text>
+              )}
+            </View>
           </View>
 
           <View style={styles.headerActions}>
@@ -811,6 +794,9 @@ export default function ChatScreen() {
               </TouchableOpacity>
             </View>
           )}
+
+          <AudioRecorder onAudioRecorded={handleAudioRecorded} />
+
           <View style={styles.mediaBar}>
             <TouchableOpacity
               onPress={() => handleAddMedia('image')}
@@ -820,10 +806,8 @@ export default function ChatScreen() {
               <Plus size={20} color="#3b82f6" strokeWidth={2} />
             </TouchableOpacity>
 
-            <AudioRecorder onAudioRecorded={handleAudioRecorded} />
             <AudioPicker onAudioSelected={handleAudioSelected} />
-            <VideoRecorder onVideoRecorded={handleVideoRecorded} />
-            <VideoPicker onVideoSelected={handleVideoSelected} />
+            <VideoMedia onVideoSelected={handleVideoSelected} />
           </View>
 
           <View style={styles.inputRow}>
@@ -896,6 +880,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+  },
+  headerTextContainer: {
     flex: 1,
   },
   headerTitle: {
