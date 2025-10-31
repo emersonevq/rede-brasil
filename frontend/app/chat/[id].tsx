@@ -634,12 +634,29 @@ export default function ChatScreen() {
       if (socket) {
         socket.emit('chat_message', messageData);
       } else {
-        await sendChatMessage(
+        const res = await sendChatMessage(
           parseInt(id as string),
           messageData.content,
           'audio',
           uploadData.media_url,
         );
+        const message: Message = {
+          id: res.id,
+          conversation_id: res.conversation_id,
+          content: res.content,
+          content_type: 'audio',
+          media_url: res.media_url,
+          is_read: false,
+          created_at: res.created_at,
+          sender: {
+            id: currentUserId || 0,
+            username: '',
+            first_name: '',
+            last_name: '',
+            profile_photo: undefined,
+          },
+        };
+        setMessages((prev) => [...prev, message]);
       }
     } catch (error) {
       console.error('Error sending audio:', error);
