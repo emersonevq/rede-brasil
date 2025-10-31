@@ -652,7 +652,7 @@ export default function ChatScreen() {
 
       const messageData = {
         conversation_id: parseInt(id as string),
-        content: `🎥 Vídeo (${Math.floor(duration)}s)`,
+        content: `🎥 V��deo (${Math.floor(duration)}s)`,
         content_type: 'image',
         media_url: uploadData.media_url,
       };
@@ -827,6 +827,9 @@ export default function ChatScreen() {
               </TouchableOpacity>
             </View>
           )}
+
+          <AudioRecorder onAudioRecorded={handleAudioRecorded} />
+
           <View style={styles.mediaBar}>
             <TouchableOpacity
               onPress={() => handleAddMedia('image')}
@@ -836,7 +839,6 @@ export default function ChatScreen() {
               <Plus size={20} color="#3b82f6" strokeWidth={2} />
             </TouchableOpacity>
 
-            <AudioRecorder onAudioRecorded={handleAudioRecorded} />
             <AudioPicker onAudioSelected={handleAudioSelected} />
             <VideoRecorder onVideoRecorded={handleVideoRecorded} />
             <VideoPicker onVideoSelected={handleVideoSelected} />
