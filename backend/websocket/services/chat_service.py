@@ -26,6 +26,12 @@ class ChatService:
             db.add(conversation)
             db.commit()
             db.refresh(conversation)
+
+            # Reload with eager loading of participants before returning
+            conversation = db.query(Conversation).options(
+                selectinload(Conversation.participants)
+            ).filter(Conversation.id == conversation.id).first()
+
             return conversation
         finally:
             db.close()
