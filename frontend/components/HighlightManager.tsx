@@ -57,6 +57,7 @@ const DraggablePhoto = ({
   totalPhotos,
   layouts,
   onItemLayout,
+  photosList,
 }: {
   photo: string;
   index: number;
@@ -65,8 +66,9 @@ const DraggablePhoto = ({
   onDragEnd: (fromIndex: number, toIndex: number) => void;
   isDragging: boolean;
   totalPhotos: number;
-  layouts: Record<number, { x: number; y: number; width: number; height: number }>;
-  onItemLayout: (idx: number, layout: { x: number; y: number; width: number; height: number }) => void;
+  layouts: Record<string, { x: number; y: number; width: number; height: number }>;
+  onItemLayout: (key: string, layout: { x: number; y: number; width: number; height: number }) => void;
+  photosList: string[];
 }) => {
   const pan = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(1)).current;
@@ -96,23 +98,24 @@ const DraggablePhoto = ({
         setIsBeingDragged(false);
 
         try {
-          const start = layouts[index];
+          const start = layouts?.[photo];
           const dx = gs?.dx ?? 0;
           const dy = gs?.dy ?? 0;
           const centerX = (start?.x || 0) + dx + (start?.width || PHOTO_SIZE) / 2;
           const centerY = (start?.y || 0) + dy + (start?.height || PHOTO_SIZE) / 2;
 
           let targetIndex: number | null = null;
-          Object.entries(layouts).forEach(([key, rect]) => {
-            const i = Number(key);
-            if (i === index) return;
+          Object.entries(layouts || {}).forEach(([key, rect]) => {
+            if (key === photo) return;
             if (
               centerX >= rect.x &&
               centerX <= rect.x + rect.width &&
               centerY >= rect.y &&
               centerY <= rect.y + rect.height
             ) {
-              targetIndex = i;
+              // key is photo uri
+              const foundIndex = photosList?.indexOf(key) ?? -1;
+              if (foundIndex >= 0) targetIndex = foundIndex;
             }
           });
 
@@ -137,7 +140,7 @@ const DraggablePhoto = ({
 
   return (
     <Animated.View
-      onLayout={(e) => onItemLayout(index, e.nativeEvent.layout)}
+      onLayout={(e) => onItemLayout(photo, e.nativeEvent.layout)}
       {...panResponder.panHandlers}
       style={[
         styles.photoContainer,
@@ -192,9 +195,9 @@ export default function HighlightManager({
   const [photos, setPhotos] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [itemLayouts, setItemLayouts] = useState<Record<number, { x: number; y: number; width: number; height: number }>>({});
-  const handleItemLayout = (idx: number, layout: { x: number; y: number; width: number; height: number }) => {
-    setItemLayouts((prev) => ({ ...prev, [idx]: layout }));
+  const [itemLayouts, setItemLayouts] = useState<Record<string, { x: number; y: number; width: number; height: number }>>({});
+  const handleItemLayout = (key: string, layout: { x: number; y: number; width: number; height: number }) => {
+    setItemLayouts((prev) => ({ ...prev, [key]: layout }));
   };
 
   useEffect(() => {
@@ -428,7 +431,7 @@ export default function HighlightManager({
                 <View style={styles.photosGrid}>
                   {photos.map((photo, index) => (
                     <DraggablePhoto
-                      key={`photo_${index}_${photo}`}
+                      key={`photo_${photo}`}
                       photo={photo}
                       index={index}
                       onRemove={() => removePhoto(index)}
@@ -438,6 +441,7 @@ export default function HighlightManager({
                       totalPhotos={photos.length}
                       layouts={itemLayouts}
                       onItemLayout={handleItemLayout}
+                      photosList={photos}
                     />
                   ))}
 
