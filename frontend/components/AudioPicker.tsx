@@ -48,7 +48,7 @@ export default function AudioPicker({ onAudioSelected }: AudioPickerProps) {
           const sound = new Audio.Sound();
           await sound.loadAsync({ uri: asset.uri });
           const status = await sound.getStatusAsync();
-          duration = Math.floor((status.durationMillis || 0) / 1000);
+          duration = Math.floor(((status as any).durationMillis || 0) / 1000);
           await sound.unloadAsync();
         } catch (e) {
           console.warn('Could not get audio duration:', e);
