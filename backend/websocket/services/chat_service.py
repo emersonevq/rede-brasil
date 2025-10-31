@@ -306,11 +306,13 @@ class ChatService:
                 db.commit()
                 db.refresh(conversation)
 
-            # Access all participant data while session is still open
-            # This ensures the data is loaded into the object's cache
-            for p in conversation.participants:
-                _ = p.id
-                _ = p.username
+            # Make sure participants are loaded before returning
+            # by iterating through them to trigger the load
+            participants_list = list(conversation.participants)
+
+            # Explicitly expunge the conversation to detach from session
+            # but keep the data in memory (already loaded above)
+            db.expunge(conversation)
 
             return conversation
         finally:
