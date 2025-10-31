@@ -55,6 +55,8 @@ const DraggablePhoto = ({
   onDragEnd,
   isDragging,
   totalPhotos,
+  layouts,
+  onItemLayout,
 }: {
   photo: string;
   index: number;
@@ -63,6 +65,8 @@ const DraggablePhoto = ({
   onDragEnd: (fromIndex: number, toIndex: number) => void;
   isDragging: boolean;
   totalPhotos: number;
+  layouts: Record<number, { x: number; y: number; width: number; height: number }>;
+  onItemLayout: (idx: number, layout: { x: number; y: number; width: number; height: number }) => void;
 }) => {
   const pan = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(1)).current;
@@ -88,39 +92,34 @@ const DraggablePhoto = ({
         useNativeDriver: false,
       }),
 
-      onPanResponderRelease: (_, gestureState) => {
+      onPanResponderRelease: () => {
         setIsBeingDragged(false);
 
-        const columns = 3;
-        const photoWidth = PHOTO_SIZE + 8;
-        const photoHeight = PHOTO_SIZE + 8;
+        try {
+          const start = layouts[index];
+          const dx = (pan.x as any).__getValue ? (pan.x as any).__getValue() : 0;
+          const dy = (pan.y as any).__getValue ? (pan.y as any).__getValue() : 0;
+          const centerX = (start?.x || 0) + dx + (start?.width || PHOTO_SIZE) / 2;
+          const centerY = (start?.y || 0) + dy + (start?.height || PHOTO_SIZE) / 2;
 
-        const moveX = gestureState.dx;
-        const moveY = gestureState.dy;
+          let targetIndex: number | null = null;
+          Object.entries(layouts).forEach(([key, rect]) => {
+            const i = Number(key);
+            if (i === index) return;
+            if (
+              centerX >= rect.x &&
+              centerX <= rect.x + rect.width &&
+              centerY >= rect.y &&
+              centerY <= rect.y + rect.height
+            ) {
+              targetIndex = i;
+            }
+          });
 
-        const colChange = Math.round(moveX / photoWidth);
-        const rowChange = Math.round(moveY / photoHeight);
-
-        const currentRow = Math.floor(index / columns);
-        const currentCol = index % columns;
-
-        const newCol = Math.max(
-          0,
-          Math.min(columns - 1, currentCol + colChange),
-        );
-        const newRow = Math.max(
-          0,
-          Math.min(
-            Math.ceil(totalPhotos / columns) - 1,
-            currentRow + rowChange,
-          ),
-        );
-
-        const newIndex = Math.min(totalPhotos - 1, newRow * columns + newCol);
-
-        if (newIndex !== index) {
-          onDragEnd(index, newIndex);
-        }
+          if (targetIndex !== null && targetIndex !== index) {
+            onDragEnd(index, targetIndex);
+          }
+        } catch {}
 
         Animated.parallel([
           Animated.spring(pan, {
@@ -138,6 +137,7 @@ const DraggablePhoto = ({
 
   return (
     <Animated.View
+      onLayout={(e) => onItemLayout(index, e.nativeEvent.layout)}
       {...panResponder.panHandlers}
       style={[
         styles.photoContainer,
@@ -192,6 +192,10 @@ export default function HighlightManager({
   const [photos, setPhotos] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [itemLayouts, setItemLayouts] = useState<Record<number, { x: number; y: number; width: number; height: number }>>({});
+  const handleItemLayout = (idx: number, layout: { x: number; y: number; width: number; height: number }) => {
+    setItemLayouts((prev) => ({ ...prev, [idx]: layout }));
+  };
 
   useEffect(() => {
     if (visible) {
@@ -265,9 +269,11 @@ export default function HighlightManager({
   };
 
   const reorderPhotos = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
     const newPhotos = [...photos];
-    const [movedPhoto] = newPhotos.splice(fromIndex, 1);
-    newPhotos.splice(toIndex, 0, movedPhoto);
+    const temp = newPhotos[fromIndex];
+    newPhotos[fromIndex] = newPhotos[toIndex];
+    newPhotos[toIndex] = temp;
     setPhotos(newPhotos);
 
     if (Platform.OS === 'ios') {
@@ -430,6 +436,8 @@ export default function HighlightManager({
                       onDragEnd={reorderPhotos}
                       isDragging={false}
                       totalPhotos={photos.length}
+                      layouts={itemLayouts}
+                      onItemLayout={handleItemLayout}
                     />
                   ))}
 
