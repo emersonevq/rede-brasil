@@ -25,6 +25,7 @@ type Post = {
   liked?: boolean;
   comments?: Comment[];
   statusLabel?: string;
+  uniqueId?: string;
 };
 
 export default function PostCard({
