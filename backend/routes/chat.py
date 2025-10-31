@@ -288,14 +288,24 @@ async def get_messages(
     offset: int = 0,
 ):
     """Get messages from a conversation"""
-    conversation = chat_service.get_conversation(conversation_id)
-    if not conversation:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+    from database.session import SessionLocal
+    from sqlalchemy.orm import selectinload
 
-    # Check if user is a participant
-    participant_ids = [p.id for p in conversation.participants]
-    if current_user.id not in participant_ids:
-        raise HTTPException(status_code=403, detail="Not a participant of this conversation")
+    db = SessionLocal()
+    try:
+        conversation = db.query(Conversation).options(
+            selectinload(Conversation.participants)
+        ).filter(Conversation.id == conversation_id).first()
+
+        if not conversation:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+
+        # Check if user is a participant
+        participant_ids = [p.id for p in conversation.participants]
+        if current_user.id not in participant_ids:
+            raise HTTPException(status_code=403, detail="Not a participant of this conversation")
+    finally:
+        db.close()
 
     # Mark messages as read
     chat_service.mark_conversation_messages_as_read(conversation_id, current_user.id)
