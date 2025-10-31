@@ -522,6 +522,12 @@ export async function createConversation(
   });
 }
 
+export async function getConversation(
+  conversationId: number,
+): Promise<ChatConversation> {
+  return request(`/chat/conversations/${conversationId}`);
+}
+
 export async function getConversationMessages(
   conversationId: number,
   limit: number = 50,
