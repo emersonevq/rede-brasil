@@ -244,9 +244,12 @@ export default function MessagesScreen() {
     loadConversations();
   }, []);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const loadConversations = async () => {
     try {
       setIsLoading(true);
+      setLoadError(null);
       const conversations = await getConversations();
       setConversations(conversations);
 
@@ -256,7 +259,10 @@ export default function MessagesScreen() {
       );
       setUnreadTotal(total);
     } catch (error) {
-      console.error('Error loading conversations:', error);
+      setLoadError('Não foi possível carregar suas conversas agora.');
+      console.warn('loadConversations failed:', error);
+      setConversations([]);
+      setUnreadTotal(0);
     } finally {
       setIsLoading(false);
     }
