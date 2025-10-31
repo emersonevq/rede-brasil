@@ -239,6 +239,19 @@ export default function MessagesScreen() {
     initializeSocket();
   }, []);
 
+  // Refresh on incoming messages
+  useEffect(() => {
+    const s = getSocket();
+    if (!s) return;
+    const onNew = () => {
+      loadConversations();
+    };
+    s.on('chat_message', onNew);
+    return () => {
+      s.off('chat_message', onNew);
+    };
+  }, []);
+
   // Load conversations
   useEffect(() => {
     loadConversations();
