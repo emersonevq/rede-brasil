@@ -87,6 +87,29 @@ async def get_conversations(
     return [format_conversation(conv, current_user.id) for conv in conversations]
 
 
+@router.get("/conversations/{conversation_id}")
+async def get_conversation(
+    conversation_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    """Get a single conversation by ID"""
+    try:
+        conversation = chat_service.get_conversation(conversation_id)
+        if not conversation:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+
+        # Check if user is a participant
+        participant_ids = [p.id for p in conversation.participants]
+        if current_user.id not in participant_ids:
+            raise HTTPException(status_code=403, detail="Not a participant of this conversation")
+
+        return format_conversation(conversation, current_user.id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/conversations/search")
 async def search_conversations(
     q: str = Query(..., min_length=1),
