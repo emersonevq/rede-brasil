@@ -26,7 +26,7 @@ import {
 } from 'lucide-react-native';
 import BottomNav from '../../components/BottomNav';
 import TopBar from '../../components/TopBar';
-import { getConversations, deleteConversation } from '../../utils/api';
+import { getConversations, deleteConversation, getCurrentUser } from '../../utils/api';
 import { initializeSocket, getSocket } from '../../utils/websocket';
 
 const getDimensions = () => {
