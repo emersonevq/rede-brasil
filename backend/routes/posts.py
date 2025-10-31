@@ -85,7 +85,8 @@ def create_post_with_upload(
             out.write(file.file.read())
         media_url = f"/media/{final_name}"
 
-    post = Post(user_id=current.id, content=content, media_url=media_url)
+    unique_id = generate_unique_post_id(db)
+    post = Post(user_id=current.id, content=content, media_url=media_url, unique_id=unique_id)
     db.add(post)
     db.commit()
     db.refresh(post)
@@ -97,6 +98,7 @@ def create_post_with_upload(
         created_at=post.created_at,
         user_id=current.id,
         user_name=f"{current.first_name} {current.last_name}",
+        unique_id=post.unique_id,
         user_profile_photo=current.profile_photo,
         user_cover_photo=current.cover_photo,
     )
