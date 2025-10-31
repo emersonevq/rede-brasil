@@ -61,25 +61,13 @@ export function parseDetailId(input: string): ParsedId {
 export async function fetchDetailData(
   parsed: ParsedId,
 ): Promise<{ post?: ApiPost | null; originalId: string }> {
-  // Try to resolve into an ApiPost object for the detail view
   try {
-    if (parsed.type === 'post') {
+    if (parsed.type === 'post' || parsed.type === 'video' || parsed.type === 'story') {
       const p = await getPostById(parsed.id);
       return { post: p as ApiPost, originalId: parsed.original };
     }
 
-    if (parsed.type === 'video') {
-      // try as post first
-      try {
-        const p = await getPostById(parsed.id);
-        return { post: p as ApiPost, originalId: parsed.original };
-      } catch (e) {
-        // video might be a user media; map to pseudo-post
-      }
-    }
-
     if (parsed.type === 'profile_photo' || parsed.type === 'profile_cover') {
-      // If id looks numeric try fetching post by id, otherwise fetch user by username
       if (/^\d+$/.test(parsed.id)) {
         try {
           const p = await getPostById(parsed.id);
@@ -89,7 +77,6 @@ export async function fetchDetailData(
         }
       }
 
-      // treat id as username
       const user = await getUserById(parsed.id);
       const pseudo: ApiPost = {
         id: 0,
@@ -100,6 +87,7 @@ export async function fetchDetailData(
             : (user.cover_photo ?? null),
         created_at: user.created_at || new Date().toISOString(),
         user_id: user.id,
+        unique_id: '',
         user_name:
           user.username ||
           `${user.first_name || ''} ${user.last_name || ''}`.trim(),
@@ -111,7 +99,6 @@ export async function fetchDetailData(
     // ignore and return null
   }
 
-  // fallback: try fetching as post
   try {
     const p = await getPostById(parsed.id);
     return { post: p as ApiPost, originalId: parsed.original };
