@@ -46,7 +46,12 @@ const REACTIONS = [
   { id: 'apaixonado', emoji: '😍', label: 'Apaixonado', color: '#ec4899' },
 ];
 
-export type DetailViewType = 'post' | 'profile_photo' | 'profile_cover' | 'video' | 'story';
+export type DetailViewType =
+  | 'post'
+  | 'profile_photo'
+  | 'profile_cover'
+  | 'video'
+  | 'story';
 
 export interface DetailViewProps {
   post: ApiPost | null;

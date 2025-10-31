@@ -7,6 +7,7 @@ O sistema agora gera URLs automáticas para cada tipo de postagem com ID único 
 ## URL Patterns by Post Type
 
 ### 1. **Posts Regulares**
+
 ```
 Padrão: /detail/post-{id}-{unique_id}
 Exemplo: /detail/post-123456-0912345678
@@ -16,10 +17,11 @@ Rota: frontend/app/detail/[...params].tsx
 ```
 
 ### 2. **Fotos de Perfil**
+
 ```
 Padrão: /profile/photo-id/{unique_id}
 Ou: /profile/photo/{username}-{unique_id}
-Exemplo: 
+Exemplo:
   - /profile/photo-id/0912345678
   - /profile/photo/joao.silva-0912345678
 
@@ -27,6 +29,7 @@ Rota: frontend/app/profile/photo/[...params].tsx
 ```
 
 ### 3. **Capas de Perfil**
+
 ```
 Padrão: /profile/cover-id/{unique_id}
 Ou: /profile/cover/{username}-{unique_id}
@@ -38,6 +41,7 @@ Rota: frontend/app/profile/cover/[...params].tsx
 ```
 
 ### 4. **Fotos em Posts**
+
 ```
 Padrão: /post/photo-id-{unique_id}
 Ou: /post/photo-{id}-{unique_id}
@@ -49,6 +53,7 @@ Rota: frontend/app/post/[...params].tsx
 ```
 
 ### 5. **Vídeos**
+
 ```
 Padrão: /post/video-{id}-{unique_id}
 Ou: /video/{id}-{unique_id}
@@ -60,6 +65,7 @@ Rota: frontend/app/video/[...params].tsx ou frontend/app/post/[...params].tsx
 ```
 
 ### 6. **Histórias (Stories)**
+
 ```
 Padrão: /detail/story-{id}-{unique_id}
 Exemplo: /detail/story-789012-0912345678
@@ -93,7 +99,7 @@ const photoUrl = buildPostUrl({
   type: 'photo',
   id: post.id,
   uniqueId: post.unique_id,
-  identifier: 'joao.silva'
+  identifier: 'joao.silva',
 });
 
 // Opção 3: Construir manualmente
@@ -120,20 +126,24 @@ O backend retorna agora o `unique_id` em todas as respostas de posts:
 ## Componentes Atualizados
 
 ### DetailView Component
+
 - Recebe `post: ApiPost` com `unique_id`
 - Renderiza qualquer tipo de publicação
 - Mantém URL original sem redirecionamento
 
 ### Feed Component
+
 - Captura `unique_id` do backend
 - Gera URL automática ao abrir post
 - Passa `unique_id` para PostCard
 
 ### PostCard Component
+
 - Aceita `uniqueId` na prop `Post`
 - Pode ser usado com a URL gerada
 
 ### Route Handlers
+
 - `/detail/[...params].tsx` - Rota universal
 - `/post/[...params].tsx` - Posts com tipo
 - `/photo/[...params].tsx` - Fotos de perfil
@@ -199,11 +209,12 @@ Todos os padrões de URL são validados em `frontend/utils/detail.ts`:
 
 ```typescript
 const newFormatMatch = v.match(
-  /^(post|photo|cover|video|story)[-_]([^-_]+)(?:[-_](\d{10}))?$/i
+  /^(post|photo|cover|video|story)[-_]([^-_]+)(?:[-_](\d{10}))?$/i,
 );
 ```
 
 Exemplos válidos:
+
 - ✅ `post-123456-0912345678`
 - ✅ `photo-id-0912345678`
 - ✅ `cover-username-0912345678`

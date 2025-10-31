@@ -6,7 +6,7 @@ import type { ApiPost } from '../../utils/api';
 export default function UniversalDetailPage() {
   const params = useLocalSearchParams();
   const router = useRouter();
-  
+
   // params.params is an array when using [...params]
   const paramsArray = Array.isArray(params.params)
     ? params.params

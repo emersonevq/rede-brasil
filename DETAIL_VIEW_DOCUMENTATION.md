@@ -18,11 +18,13 @@ Implementei um sistema completo e reutilizável de visualização de detalhes pa
 #### 2. **Modelos de Dados Atualizados**
 
 **Post Model** (`backend/database/models/post.py`):
+
 ```python
 unique_id: Mapped[str] = mapped_column(String(10), unique=True, nullable=False, index=True)
 ```
 
 **UserProfile Model** (`backend/database/models/profile.py`):
+
 ```python
 unique_id: Mapped[str | None] = mapped_column(String(10), unique=True, nullable=True, index=True)
 ```
@@ -39,6 +41,7 @@ unique_id: Mapped[str | None] = mapped_column(String(10), unique=True, nullable=
 #### 1. **Componente DetailView Reutilizável** (`frontend/components/DetailView.tsx`)
 
 Props:
+
 ```typescript
 interface DetailViewProps {
   post: ApiPost | null;
@@ -50,6 +53,7 @@ interface DetailViewProps {
 ```
 
 Características:
+
 - Funciona para todos os tipos de posts (post, profile_photo, profile_cover, video, story)
 - Mantém URL original (não redireciona)
 - Suporta reações, comentários, compartilhamento e salvar
@@ -74,11 +78,13 @@ Suporta múltiplos formatos:
 #### 3. **Rotas Dinâmicas**
 
 **Rota Universal** (`frontend/app/detail/[...params].tsx`):
+
 - Aceita qualquer padrão de URL
 - Determina tipo e ID automaticamente
 - Define título apropriado por tipo
 
 Exemplos de URLs:
+
 ```
 /detail/post-123456
 /detail/photo-id-0912345678
@@ -88,6 +94,7 @@ Exemplos de URLs:
 ```
 
 **Rotas Específicas** (backward compatibility):
+
 - `/detail/[id].tsx` - Rota legada
 - `/post/[id].tsx` - Posts diretos
 
@@ -161,6 +168,7 @@ Exemplos:
 ## Estrutura de Banco de Dados
 
 ### Posts
+
 ```
 id (PK)
 user_id (FK)
@@ -171,6 +179,7 @@ created_at (INDEX)
 ```
 
 ### Profiles
+
 ```
 id (PK)
 user_id (FK, UQ)

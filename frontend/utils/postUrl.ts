@@ -58,7 +58,10 @@ export function getProfilePhotoUrl(
     type: 'photo',
     id: userId,
     uniqueId,
-    identifier: typeof userName === 'string' ? userName.replace(/\s+/g, '').toLowerCase() : undefined,
+    identifier:
+      typeof userName === 'string'
+        ? userName.replace(/\s+/g, '').toLowerCase()
+        : undefined,
   });
 }
 
@@ -71,7 +74,10 @@ export function getProfileCoverUrl(
     type: 'cover',
     id: userId,
     uniqueId,
-    identifier: typeof userName === 'string' ? userName.replace(/\s+/g, '').toLowerCase() : undefined,
+    identifier:
+      typeof userName === 'string'
+        ? userName.replace(/\s+/g, '').toLowerCase()
+        : undefined,
   });
 }
 

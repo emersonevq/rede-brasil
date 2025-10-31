@@ -22,7 +22,9 @@ export function parseDetailId(input: string): ParsedId {
 
   // Support format: "type-id-uniqueId" or "type-id"
   // Example: "photo-id-0912345678" or "post-123456"
-  const newFormatMatch = v.match(/^(post|photo|cover|video|story)[-_]([^-_]+)(?:[-_](\d{10}))?$/i);
+  const newFormatMatch = v.match(
+    /^(post|photo|cover|video|story)[-_]([^-_]+)(?:[-_](\d{10}))?$/i,
+  );
   if (newFormatMatch) {
     const p = newFormatMatch[1].toLowerCase();
     const idPart = newFormatMatch[2];
@@ -62,7 +64,11 @@ export async function fetchDetailData(
   parsed: ParsedId,
 ): Promise<{ post?: ApiPost | null; originalId: string }> {
   try {
-    if (parsed.type === 'post' || parsed.type === 'video' || parsed.type === 'story') {
+    if (
+      parsed.type === 'post' ||
+      parsed.type === 'video' ||
+      parsed.type === 'story'
+    ) {
       const p = await getPostById(parsed.id);
       return { post: p as ApiPost, originalId: parsed.original };
     }
