@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 from database.session import get_db
 from database.models import User, Conversation, Message
 from schemas.conversation import (
