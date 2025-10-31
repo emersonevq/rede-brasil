@@ -441,8 +441,29 @@ export default function ChatScreen() {
           };
           socket.emit('chat_message', messageData);
         } else {
-          // Fallback to REST API
-          await sendChatMessage(parseInt(id as string), inputText, 'text');
+          // Fallback to REST API and update local state
+          const res = await sendChatMessage(
+            parseInt(id as string),
+            inputText,
+            'text',
+          );
+          const message: Message = {
+            id: res.id,
+            conversation_id: res.conversation_id,
+            content: res.content,
+            content_type: (res.content_type as any) || 'text',
+            media_url: res.media_url,
+            is_read: false,
+            created_at: res.created_at,
+            sender: {
+              id: currentUserId || 0,
+              username: '',
+              first_name: '',
+              last_name: '',
+              profile_photo: undefined,
+            },
+          };
+          setMessages((prev) => [...prev, message]);
         }
       }
 
