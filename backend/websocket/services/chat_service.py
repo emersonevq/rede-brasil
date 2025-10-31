@@ -274,11 +274,11 @@ class ChatService:
         """Get or create a direct message conversation between two users"""
         db = SessionLocal()
         try:
-            from sqlalchemy.orm import joinedload
+            from sqlalchemy.orm import selectinload
 
             # Find existing DM conversation between these two users with eager loading
             conversations = db.query(Conversation).options(
-                joinedload(Conversation.participants)
+                selectinload(Conversation.participants)
             ).filter(
                 and_(
                     Conversation.is_group == False,
@@ -290,8 +290,6 @@ class ChatService:
             for conversation in conversations:
                 participant_ids = {p.id for p in conversation.participants}
                 if participant_ids == {user_id_1, user_id_2}:
-                    # Force load all participant data into memory before detaching
-                    _ = [p.id for p in conversation.participants]
                     return conversation
 
             # If no conversation found, create a new one
@@ -303,9 +301,10 @@ class ChatService:
             conversation.participants = participants
             db.add(conversation)
             db.commit()
-            db.refresh(conversation)
-            # Force load all participant data into memory
-            _ = [p.id for p in conversation.participants]
+            # Get a fresh instance with eager loading
+            conversation = db.query(Conversation).options(
+                selectinload(Conversation.participants)
+            ).filter(Conversation.id == conversation.id).first()
             return conversation
         finally:
             db.close()
