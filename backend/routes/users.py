@@ -6,6 +6,7 @@ from schemas.post import PostOut
 from schemas.profile import ProfileOut, ProfileUpdate
 from dependencies import get_current_user
 from database.models import User, Post, UserProfile, UserPosition, UserEducation
+from core.unique_id import generate_unique_profile_id
 import os
 import uuid
 from pathlib import Path
