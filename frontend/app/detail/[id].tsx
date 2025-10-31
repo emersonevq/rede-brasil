@@ -93,12 +93,16 @@ export default function DetailView() {
       try {
         setLoading(true);
         setError(null);
-        const api = await import('../../utils/api');
-        const data = await api.getPostById(id);
+        const { parseDetailId, fetchDetailData } = await import(
+          '../../utils/detail'
+        );
+        const parsed = parseDetailId(id);
+        const { post: data } = await fetchDetailData(parsed);
+
         if (!mounted) return;
 
         setPost(data);
-        setPostMediaUrl(absoluteUrl(data.media_url) || null);
+        setPostMediaUrl(data ? absoluteUrl(data.media_url) : null);
       } catch (e: any) {
         if (!mounted) return;
         setError(e?.message || 'Falha ao carregar publicação');

@@ -222,11 +222,6 @@ export default function ProfilePhotoEditor({
           >
             <View style={styles.editorSection}>
               <Text style={styles.sectionLabel}>Editar Foto</Text>
-              <Text style={styles.instructionHint}>
-                {scale > 1
-                  ? 'Arraste com um dedo para posicionar'
-                  : 'Use dois dedos para ampliar a imagem'}
-              </Text>
 
               <View style={styles.circleContainer}>
                 <View style={styles.circleMask}>
@@ -263,12 +258,6 @@ export default function ProfilePhotoEditor({
                     </Text>
                   </View>
                 )}
-              </View>
-
-              <View style={styles.debugInfo}>
-                <Text style={styles.debugText}>Zoom: {scale.toFixed(2)}x</Text>
-                <Text style={styles.debugText}>X: {offsetX.toFixed(0)}</Text>
-                <Text style={styles.debugText}>Y: {offsetY.toFixed(0)}</Text>
               </View>
 
               <TouchableOpacity
@@ -310,22 +299,6 @@ export default function ProfilePhotoEditor({
                 textAlignVertical="top"
               />
               <Text style={styles.charCount}>{caption.length}/150</Text>
-            </View>
-
-            <View style={styles.instructionsSection}>
-              <Text style={styles.instructionsTitle}>Como usar:</Text>
-              <Text style={styles.instructionText}>
-                • Coloque dois dedos na imagem e afaste para ampliar
-              </Text>
-              <Text style={styles.instructionText}>
-                • Aproxime dois dedos para reduzir
-              </Text>
-              <Text style={styles.instructionText}>
-                • Arraste com um dedo para posicionar (quando ampliado)
-              </Text>
-              <Text style={styles.instructionText}>
-                • Use "Resetar" para voltar ao tamanho original
-              </Text>
             </View>
           </ScrollView>
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -29,7 +29,9 @@ import {
 } from 'lucide-react-native';
 
 const { width: screenWidth } = Dimensions.get('window');
-const PHOTO_SIZE = (screenWidth - 48) / 3 - 8;
+const COLUMNS = 5;
+const PHOTO_SIZE = Math.floor((screenWidth - 48) / COLUMNS - 8);
+const ITEM_HEIGHT = Math.round(PHOTO_SIZE * 1.6);
 
 export type Highlight = {
   id: string;
@@ -46,23 +48,40 @@ type Props = {
   highlight?: Highlight;
 };
 
-// Componente para foto arrastável
+// Draggable photo component with hover detection and swap-on-drop
 const DraggablePhoto = ({
   photo,
   index,
   onRemove,
   onReplace,
   onDragEnd,
-  isDragging,
   totalPhotos,
+  itemLayouts,
+  containerLayout,
+  onItemLayout,
+  setHoverIndex,
 }: {
   photo: string;
   index: number;
   onRemove: () => void;
   onReplace: () => void;
   onDragEnd: (fromIndex: number, toIndex: number) => void;
-  isDragging: boolean;
   totalPhotos: number;
+  itemLayouts?: Record<
+    number,
+    { x: number; y: number; width: number; height: number }
+  >;
+  containerLayout?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null;
+  onItemLayout?: (
+    idx: number,
+    layout: { x: number; y: number; width: number; height: number },
+  ) => void;
+  setHoverIndex?: (idx: number | null) => void;
 }) => {
   const pan = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(1)).current;
@@ -71,56 +90,144 @@ const DraggablePhoto = ({
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 5 || Math.abs(gestureState.dy) > 5;
+      },
 
       onPanResponderGrant: () => {
         setIsBeingDragged(true);
         if (Platform.OS === 'ios') {
           Vibration.vibrate(10);
+        } else {
+          Vibration.vibrate(50);
         }
+
         Animated.spring(scale, {
-          toValue: 1.1,
+          toValue: 1.15,
           useNativeDriver: true,
         }).start();
       },
 
-      onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], {
-        useNativeDriver: false,
-      }),
+      onPanResponderMove: (evt, gs) => {
+        // Update animated pan
+        Animated.event([null, { dx: pan.x, dy: pan.y }], {
+          useNativeDriver: false,
+        })(evt, gs);
+
+        try {
+          if (!itemLayouts || !containerLayout) return;
+          const start = itemLayouts[index];
+          if (!start) return;
+
+          const dx = gs?.dx ?? 0;
+          const dy = gs?.dy ?? 0;
+
+          const centerX =
+            (containerLayout.x || 0) + start.x + dx + start.width / 2;
+          const centerY =
+            (containerLayout.y || 0) + start.y + dy + start.height / 2;
+
+          let found: number | null = null;
+          Object.entries(itemLayouts).forEach(([key, rect]) => {
+            const i = Number(key);
+            if (i === index) return;
+            const rx1 = (containerLayout.x || 0) + rect.x;
+            const ry1 = (containerLayout.y || 0) + rect.y;
+            const rx2 = rx1 + rect.width;
+            const ry2 = ry1 + rect.height;
+            if (
+              centerX >= rx1 &&
+              centerX <= rx2 &&
+              centerY >= ry1 &&
+              centerY <= ry2
+            ) {
+              found = i;
+            }
+          });
+
+          if (setHoverIndex) setHoverIndex(found);
+        } catch (e) {
+          // ignore
+        }
+      },
 
       onPanResponderRelease: (_, gestureState) => {
         setIsBeingDragged(false);
 
-        const columns = 3;
-        const photoWidth = PHOTO_SIZE + 8;
-        const photoHeight = PHOTO_SIZE + 8;
+        try {
+          let targetIndex: number | null = null;
 
-        const moveX = gestureState.dx;
-        const moveY = gestureState.dy;
+          if (itemLayouts && containerLayout) {
+            const start = itemLayouts[index];
+            if (start) {
+              const dx = gestureState.dx ?? 0;
+              const dy = gestureState.dy ?? 0;
+              const centerX =
+                (containerLayout.x || 0) + start.x + dx + start.width / 2;
+              const centerY =
+                (containerLayout.y || 0) + start.y + dy + start.height / 2;
 
-        const colChange = Math.round(moveX / photoWidth);
-        const rowChange = Math.round(moveY / photoHeight);
+              Object.entries(itemLayouts).forEach(([key, rect]) => {
+                const i = Number(key);
+                if (i === index) return;
+                const rx1 = (containerLayout.x || 0) + rect.x;
+                const ry1 = (containerLayout.y || 0) + rect.y;
+                const rx2 = rx1 + rect.width;
+                const ry2 = ry1 + rect.height;
+                if (
+                  centerX >= rx1 &&
+                  centerX <= rx2 &&
+                  centerY >= ry1 &&
+                  centerY <= ry2
+                ) {
+                  targetIndex = i;
+                }
+              });
+            }
+          }
 
-        const currentRow = Math.floor(index / columns);
-        const currentCol = index % columns;
+          // fallback to grid math (for safety)
+          if (targetIndex === null) {
+            const columns = COLUMNS;
+            const ITEM_W = PHOTO_SIZE + 8;
+            const ITEM_H = ITEM_HEIGHT + 8;
+            const movedCols = Math.round((gestureState.dx ?? 0) / ITEM_W);
+            const movedRows = Math.round((gestureState.dy ?? 0) / ITEM_H);
+            const currentCol = index % columns;
+            const currentRow = Math.floor(index / columns);
+            const newCol = Math.max(
+              0,
+              Math.min(columns - 1, currentCol + movedCols),
+            );
+            const newRow = Math.max(
+              0,
+              Math.min(
+                Math.ceil(totalPhotos / columns) - 1,
+                currentRow + movedRows,
+              ),
+            );
+            const newIndex = Math.min(
+              totalPhotos - 1,
+              newRow * columns + newCol,
+            );
+            if (newIndex !== index) targetIndex = newIndex;
+          }
 
-        const newCol = Math.max(
-          0,
-          Math.min(columns - 1, currentCol + colChange),
-        );
-        const newRow = Math.max(
-          0,
-          Math.min(
-            Math.ceil(totalPhotos / columns) - 1,
-            currentRow + rowChange,
-          ),
-        );
+          if (
+            targetIndex !== null &&
+            targetIndex !== undefined &&
+            targetIndex !== index
+          ) {
+            onDragEnd(index, targetIndex);
 
-        const newIndex = Math.min(totalPhotos - 1, newRow * columns + newCol);
-
-        if (newIndex !== index) {
-          onDragEnd(index, newIndex);
+            if (Platform.OS === 'ios') Vibration.vibrate(10);
+            else Vibration.vibrate(30);
+          }
+        } catch (e) {
+          // ignore
         }
+
+        if (setHoverIndex) setHoverIndex(null);
 
         Animated.parallel([
           Animated.spring(pan, {
@@ -138,6 +245,9 @@ const DraggablePhoto = ({
 
   return (
     <Animated.View
+      onLayout={(e) =>
+        onItemLayout && onItemLayout(index, e.nativeEvent.layout)
+      }
       {...panResponder.panHandlers}
       style={[
         styles.photoContainer,
@@ -176,7 +286,11 @@ const DraggablePhoto = ({
         </TouchableOpacity>
       </View>
 
-      {isBeingDragged && <View style={styles.draggingOverlay} />}
+      {isBeingDragged && (
+        <View style={styles.draggingOverlay}>
+          <View style={styles.draggingIndicator} />
+        </View>
+      )}
     </Animated.View>
   );
 };
@@ -192,6 +306,25 @@ export default function HighlightManager({
   const [photos, setPhotos] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // layout tracking for hover detection
+  const [itemLayouts, setItemLayouts] = useState<
+    Record<number, { x: number; y: number; width: number; height: number }>
+  >({});
+  const [containerLayout, setContainerLayout] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [currentOverIndex, setCurrentOverIndex] = useState<number | null>(null);
+
+  const handleItemLayout = (
+    idx: number,
+    layout: { x: number; y: number; width: number; height: number },
+  ) => {
+    setItemLayouts((prev) => ({ ...prev, [idx]: layout }));
+  };
 
   useEffect(() => {
     if (visible) {
@@ -264,15 +397,14 @@ export default function HighlightManager({
     setPhotos(photos.filter((_, i) => i !== index));
   };
 
+  // Swap items (so they exchange places)
   const reorderPhotos = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
     const newPhotos = [...photos];
-    const [movedPhoto] = newPhotos.splice(fromIndex, 1);
-    newPhotos.splice(toIndex, 0, movedPhoto);
+    const tmp = newPhotos[fromIndex];
+    newPhotos[fromIndex] = newPhotos[toIndex];
+    newPhotos[toIndex] = tmp;
     setPhotos(newPhotos);
-
-    if (Platform.OS === 'ios') {
-      Vibration.vibrate(10);
-    }
   };
 
   const handleSave = async () => {
@@ -417,9 +549,12 @@ export default function HighlightManager({
             ) : (
               <>
                 <Text style={styles.dragHint}>
-                  💡 Segure e arraste para reorganizar
+                  💡 Arraste as fotos para reorganizar a ordem
                 </Text>
-                <View style={styles.photosGrid}>
+                <View
+                  style={styles.photosGrid}
+                  onLayout={(e) => setContainerLayout(e.nativeEvent.layout)}
+                >
                   {photos.map((photo, index) => (
                     <DraggablePhoto
                       key={`photo_${index}_${photo}`}
@@ -428,8 +563,11 @@ export default function HighlightManager({
                       onRemove={() => removePhoto(index)}
                       onReplace={() => pickImage(false, index)}
                       onDragEnd={reorderPhotos}
-                      isDragging={false}
                       totalPhotos={photos.length}
+                      itemLayouts={itemLayouts}
+                      containerLayout={containerLayout}
+                      onItemLayout={handleItemLayout}
+                      setHoverIndex={setCurrentOverIndex}
                     />
                   ))}
 
@@ -443,6 +581,15 @@ export default function HighlightManager({
                     </TouchableOpacity>
                   )}
                 </View>
+
+                {/* Optional visual hint when hovering */}
+                {currentOverIndex !== null && (
+                  <View style={{ padding: 12 }}>
+                    <Text style={{ color: '#64748b' }}>
+                      Solte para trocar com a posição {currentOverIndex + 1}
+                    </Text>
+                  </View>
+                )}
               </>
             )}
           </View>
@@ -607,7 +754,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textAlign: 'center',
     backgroundColor: '#f1f5f9',
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
   },
@@ -618,10 +765,11 @@ const styles = StyleSheet.create({
   },
   photoContainer: {
     width: PHOTO_SIZE,
-    height: PHOTO_SIZE,
+    height: ITEM_HEIGHT,
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#f1f5f9',
+    position: 'relative',
   },
   photoGrid: {
     width: '100%',
@@ -631,15 +779,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 4,
     left: 4,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 4,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 6,
     padding: 4,
   },
   photoNumber: {
     position: 'absolute',
     top: 4,
     right: 4,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
@@ -662,18 +810,28 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   deleteBtn: {
-    backgroundColor: 'rgba(220, 38, 38, 0.8)',
+    backgroundColor: 'rgba(220, 38, 38, 0.85)',
   },
   draggingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
     borderWidth: 2,
     borderColor: '#3b82f6',
     borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  draggingIndicator: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(59, 130, 246, 0.3)',
+    borderWidth: 2,
+    borderColor: '#3b82f6',
   },
   addPhotoInline: {
     width: PHOTO_SIZE,
-    height: PHOTO_SIZE,
+    height: ITEM_HEIGHT,
     borderRadius: 12,
     borderWidth: 2,
     borderColor: '#e2e8f0',
