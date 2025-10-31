@@ -282,8 +282,12 @@ async def update_message(
     """Edit a message"""
     try:
         from database.session import SessionLocal
+        from sqlalchemy.orm import selectinload
         db = SessionLocal()
-        message = db.query(Message).filter(Message.id == message_id).first()
+        message = db.query(Message).options(
+            selectinload(Message.sender),
+            selectinload(Message.read_by)
+        ).filter(Message.id == message_id).first()
         db.close()
 
         if not message:
@@ -328,8 +332,12 @@ async def delete_message(
     """Delete a message"""
     try:
         from database.session import SessionLocal
+        from sqlalchemy.orm import selectinload
         db = SessionLocal()
-        message = db.query(Message).filter(Message.id == message_id).first()
+        message = db.query(Message).options(
+            selectinload(Message.sender),
+            selectinload(Message.read_by)
+        ).filter(Message.id == message_id).first()
         db.close()
 
         if not message:
@@ -356,8 +364,12 @@ async def mark_message_read(
     """Mark a message as read"""
     try:
         from database.session import SessionLocal
+        from sqlalchemy.orm import selectinload
         db = SessionLocal()
-        message = db.query(Message).filter(Message.id == message_id).first()
+        message = db.query(Message).options(
+            selectinload(Message.sender),
+            selectinload(Message.read_by)
+        ).filter(Message.id == message_id).first()
         db.close()
 
         if not message:
@@ -465,8 +477,12 @@ async def react_to_message(
     """Add a reaction to a message"""
     try:
         from database.session import SessionLocal
+        from sqlalchemy.orm import selectinload
         db = SessionLocal()
-        message = db.query(Message).filter(Message.id == message_id).first()
+        message = db.query(Message).options(
+            selectinload(Message.sender),
+            selectinload(Message.read_by)
+        ).filter(Message.id == message_id).first()
         db.close()
 
         if not message:
