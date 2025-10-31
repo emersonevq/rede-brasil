@@ -93,36 +93,14 @@ export default function DetailView() {
       try {
         setLoading(true);
         setError(null);
-        const api = await import('../../utils/api');
-        let data: any = null;
-        // support special ids for profile/cover images routed from profile page
-        if (id.startsWith('photo:') || id.startsWith('cover:')) {
-          const parts = id.split(':');
-          const mode = parts[0];
-          const username = parts[1];
-          try {
-            const user = await api.getUserById(username);
-            data = {
-              id: `${mode}:${username}`,
-              content: '',
-              media_url: mode === 'photo' ? user.profile_photo : user.cover_photo,
-              created_at: user.created_at || new Date().toISOString(),
-              user_id: user.id,
-              user_name: user.username || `${user.first_name} ${user.last_name}`,
-              user_profile_photo: user.profile_photo || undefined,
-            } as ApiPost;
-          } catch (e) {
-            // fallback to post fetch
-            data = await api.getPostById(id);
-          }
-        } else {
-          data = await api.getPostById(id);
-        }
+        const { parseDetailId, fetchDetailData } = await import('../../utils/detail');
+        const parsed = parseDetailId(id);
+        const { post: data } = await fetchDetailData(parsed);
 
         if (!mounted) return;
 
         setPost(data);
-        setPostMediaUrl(absoluteUrl(data.media_url) || null);
+        setPostMediaUrl(data ? absoluteUrl(data.media_url) : null);
       } catch (e: any) {
         if (!mounted) return;
         setError(e?.message || 'Falha ao carregar publicação');
