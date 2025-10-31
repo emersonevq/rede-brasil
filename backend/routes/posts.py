@@ -6,6 +6,7 @@ from database.session import get_db
 from database.models import Post
 from schemas.post import PostCreate, PostOut
 from dependencies import get_current_user
+from core.unique_id import generate_unique_post_id
 
 router = APIRouter()
 
