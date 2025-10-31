@@ -35,10 +35,10 @@ export default function AudioPicker({ onAudioSelected }: AudioPickerProps) {
       setIsLoading(true);
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Audio,
+        mediaTypes: ['audio'],
         allowsEditing: false,
         quality: 1,
-      });
+      } as any);
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
