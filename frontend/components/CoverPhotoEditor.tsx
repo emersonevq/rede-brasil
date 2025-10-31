@@ -345,7 +345,7 @@ export default function CoverPhotoEditor({
                             ],
                           },
                         ]}
-                        resizeMode="contain"
+                        resizeMode="cover"
                       />
                     )}
                     <View
