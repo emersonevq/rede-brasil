@@ -259,7 +259,7 @@ const STORIES: StoryItem[] = [
   },
 ];
 
-const StoryCard = ({ item, onPress }) => (
+const StoryCard = ({ item, onPress }: { item: StoryItem; onPress: () => void }) => (
   <TouchableOpacity
     activeOpacity={0.95}
     onPress={onPress}
@@ -272,7 +272,7 @@ const StoryCard = ({ item, onPress }) => (
     />
 
     <View style={styles.progressContainer}>
-      {item.segments.map((segment, index) => (
+      {item.segments.map((segment: StorySegment, index: number) => (
         <View key={segment.id} style={styles.progressBar}>
           <View
             style={[
