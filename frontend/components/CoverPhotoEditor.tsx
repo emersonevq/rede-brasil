@@ -53,7 +53,7 @@ const getDimensions = () => {
   return Dimensions.get('window');
 };
 const { width: SCREEN_WIDTH } = getDimensions();
-const MIN_SCALE = 0.8;
+const MIN_SCALE = 1;
 const MAX_SCALE = 3;
 
 // Modal de descrição
@@ -345,7 +345,7 @@ export default function CoverPhotoEditor({
                             ],
                           },
                         ]}
-                        resizeMode="cover"
+                        resizeMode="contain"
                       />
                     )}
                     <View
@@ -355,11 +355,7 @@ export default function CoverPhotoEditor({
 
                     {/* Overlay de Instruções */}
                     <View style={styles.instructionOverlay}>
-                      <Text style={styles.instructionText}>
-                        {scale > 1
-                          ? '👆 Arraste para posicionar'
-                          : '✌️ Use dois dedos para ampliar'}
-                      </Text>
+                      <Text style={styles.instructionText}>Use dois dedos para ampliar</Text>
                     </View>
                   </View>
 
