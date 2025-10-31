@@ -129,12 +129,6 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
     }
   };
 
-  const onPlaybackStatusUpdate = (status: any) => {
-    if (status.didJustFinish) {
-      setIsPlaying(false);
-    }
-  };
-
   const sendAudio = async () => {
     try {
       if (!recordingUri) return;
@@ -142,13 +136,8 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
       setIsSaving(true);
       onAudioRecorded(recordingUri, recordingDuration);
 
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
-      }
-
       setRecordingUri(null);
       setRecordingDuration(0);
-      setIsVisible(false);
     } catch (error) {
       console.error('Error sending audio:', error);
       alert('Erro ao enviar áudio');
@@ -163,7 +152,6 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
     }
     setRecordingUri(null);
     setRecordingDuration(0);
-    setIsPlaying(false);
   };
 
   const formatDuration = (seconds: number) => {
@@ -172,138 +160,59 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  return (
-    <>
-      <TouchableOpacity
-        onPress={() => setIsVisible(true)}
-        style={styles.button}
-        activeOpacity={0.7}
-      >
-        <Mic size={20} color="#3b82f6" strokeWidth={2} />
-      </TouchableOpacity>
-
-      <Modal
-        visible={isVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => {
-          if (isRecording) {
-            stopRecording();
-          }
-          setIsVisible(false);
-          resetRecording();
-        }}
-      >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>Gravar Áudio</Text>
-            <TouchableOpacity
-              onPress={() => {
-                if (isRecording) {
-                  stopRecording();
-                }
-                setIsVisible(false);
-                resetRecording();
-              }}
-            >
-              <X size={24} color="#0f172a" strokeWidth={2} />
-            </TouchableOpacity>
+  // Show inline recording UI when recording or has a recording
+  if (isRecording || recordingUri) {
+    return (
+      <View style={styles.inlineContainer}>
+        <View style={styles.inlineRecordingBar}>
+          <View style={styles.recordingIndicator}>
+            <View
+              style={[styles.recordingDot, styles.recordingDotActive]}
+            />
+            <Text style={styles.recordingText}>
+              {isRecording ? `Gravando... ${formatDuration(recordingDuration)}` : `Áudio: ${formatDuration(recordingDuration)}`}
+            </Text>
           </View>
 
-          <View style={styles.content}>
-            {!recordingUri ? (
+          <View style={styles.inlineActionButtons}>
+            {recordingUri && !isRecording && (
               <>
-                <Text style={styles.durationDisplay}>
-                  {formatDuration(recordingDuration)}
-                </Text>
-
-                {isRecording && (
-                  <View style={styles.recordingIndicator}>
-                    <View
-                      style={[styles.recordingDot, styles.recordingDotActive]}
-                    />
-                    <Text style={styles.recordingText}>Gravando...</Text>
-                  </View>
-                )}
+                <TouchableOpacity
+                  style={styles.inlineButton}
+                  onPress={resetRecording}
+                >
+                  <Trash2 size={18} color="#ef4444" strokeWidth={2} />
+                </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[
-                    styles.recordButton,
-                    isRecording && styles.recordButtonActive,
-                  ]}
-                  onPress={isRecording ? stopRecording : startRecording}
+                  style={[styles.inlineButton, styles.sendInlineButton]}
+                  onPress={sendAudio}
+                  disabled={isSaving}
                 >
-                  {isRecording ? (
-                    <Square
-                      size={32}
-                      color="#fff"
-                      strokeWidth={2}
-                      fill="#ef4444"
-                    />
+                  {isSaving ? (
+                    <ActivityIndicator size="small" color="#fff" />
                   ) : (
-                    <Mic size={32} color="#fff" strokeWidth={2} />
+                    <Send size={18} color="#fff" strokeWidth={2} />
                   )}
                 </TouchableOpacity>
-
-                <Text style={styles.hint}>
-                  {isRecording
-                    ? 'Toque para parar'
-                    : 'Toque para começar a gravar'}
-                </Text>
-              </>
-            ) : (
-              <>
-                <Text style={styles.previewTitle}>Preview</Text>
-                <Text style={styles.durationDisplay}>
-                  {formatDuration(recordingDuration)}
-                </Text>
-
-                <TouchableOpacity
-                  style={[
-                    styles.playButton,
-                    isPlaying && styles.playButtonActive,
-                  ]}
-                  onPress={playRecording}
-                  disabled={isPlaying}
-                >
-                  <Play size={32} color="#fff" strokeWidth={2} fill="#fff" />
-                </TouchableOpacity>
-
-                <Text style={styles.hint}>
-                  {isPlaying ? 'Reproduzindo...' : 'Toque para ouvir'}
-                </Text>
-
-                <View style={styles.actionButtons}>
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => {
-                      resetRecording();
-                    }}
-                  >
-                    <Text style={styles.cancelButtonText}>Refazer</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.sendButton}
-                    onPress={sendAudio}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? (
-                      <ActivityIndicator size="small" color="#fff" />
-                    ) : (
-                      <>
-                        <Send size={20} color="#fff" strokeWidth={2} />
-                        <Text style={styles.sendButtonText}>Enviar</Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
-                </View>
               </>
             )}
           </View>
-        </SafeAreaView>
-      </Modal>
-    </>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <TouchableOpacity
+      {...panResponderRef.current.panHandlers}
+      onPress={startRecording}
+      onLongPress={startRecording}
+      style={styles.button}
+      activeOpacity={0.7}
+    >
+      <Mic size={20} color="#3b82f6" strokeWidth={2} />
+    </TouchableOpacity>
   );
 }
 
