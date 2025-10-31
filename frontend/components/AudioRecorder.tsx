@@ -24,7 +24,7 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
   const [isSaving, setIsSaving] = useState(false);
   const recordingRef = useRef<Audio.Recording | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
-  const durationIntervalRef = useRef<NodeJS.Timeout>();
+  const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const requestAudioPermission = async () => {
     try {
@@ -337,7 +337,6 @@ const styles = StyleSheet.create({
   },
   recordingDotActive: {
     backgroundColor: '#ef4444',
-    animation: 'pulse',
   },
   recordingText: {
     fontSize: 14,
