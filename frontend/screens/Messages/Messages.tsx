@@ -65,18 +65,31 @@ const ChatItem = ({
   item,
   onPress,
   onDelete,
+  currentUserId,
 }: {
   item: ChatItem;
   onPress: () => void;
   onDelete: (id: number) => void;
+  currentUserId?: number;
 }) => {
   const isUnread = item.unread_count > 0;
   const [showActions, setShowActions] = useState(false);
 
+  // Get the other participant (for DMs)
+  const getOtherParticipant = () => {
+    if (item.is_group) {
+      return item.participants[0];
+    }
+    return (
+      item.participants.find((p) => p.id !== currentUserId) ||
+      item.participants[0]
+    );
+  };
+
   // Get the other participant's name (for DMs)
   const getDisplayName = () => {
     if (item.name) return item.name;
-    const otherParticipant = item.participants[0];
+    const otherParticipant = getOtherParticipant();
     return `${otherParticipant.first_name} ${otherParticipant.last_name}`;
   };
 
