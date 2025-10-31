@@ -4,28 +4,43 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Modal,
-  SafeAreaView,
   ActivityIndicator,
+  PanResponder,
 } from 'react-native';
 import { Audio } from 'expo-av';
-import { Mic, Square, Play, Send, X } from 'lucide-react-native';
+import { Mic, Square, Send, X, Trash2 } from 'lucide-react-native';
 
 interface AudioRecorderProps {
   onAudioRecorded: (uri: string, duration: number) => void;
 }
 
 export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
-  const [isVisible, setIsVisible] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const recordingRef = useRef<Audio.Recording | null>(null);
-  const soundRef = useRef<Audio.Sound | null>(null);
   const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null,
+  );
+  const panResponderRef = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+      onPanResponderMove: () => {},
+      onPanResponderRelease: () => {
+        if (isRecording) {
+          stopRecording();
+        }
+      },
+      onPanResponderTerminate: () => {
+        if (isRecording) {
+          stopRecording();
+        }
+      },
+    }),
   );
 
   const requestAudioPermission = async () => {
