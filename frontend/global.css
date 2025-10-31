@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Ensure full height for web roots so flex layouts and 100% heights work correctly */
+html, body, #root, #__expo-html-root, #__next, #app-root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure the expo web root is a flex container */
+#root, #__expo-html-root, #__next, #app-root {
+  display: flex;
+  flex: 1 1 auto;
+}
+
+/* Make sure background is inherited so gradients cover full screen */
+#__expo-html-root, #root, body {
+  background: transparent;
+}
