@@ -39,6 +39,7 @@ async def chat_message(sid, data):
     try:
         user_id = connection_service.user_by_session.get(sid)
         if not user_id:
+            print(f"[chat_message] No user_id for sid {sid}")
             return
 
         from database.session import SessionLocal
@@ -47,12 +48,15 @@ async def chat_message(sid, data):
         db.close()
 
         if not user:
+            print(f"[chat_message] User {user_id} not found")
             return
 
         conversation_id = data.get("conversation_id")
         content = data.get("content")
         content_type = data.get("content_type", "text")
         media_url = data.get("media_url")
+
+        print(f"[chat_message] User {user_id} sending message to conversation {conversation_id}")
 
         message_payload = await chat_handler.handle_send_message(
             user=user,
@@ -62,14 +66,25 @@ async def chat_message(sid, data):
             media_url=media_url,
         )
 
-        await chat_handler.emit_message_to_conversation(
-            conversation_id=conversation_id,
-            message_data=message_payload
-        )
+        print(f"[chat_message] Message created: {message_payload}")
 
+        # Emit to all participants in the conversation
+        conversation = chat_handler.chat_service.get_conversation(conversation_id)
+        if conversation:
+            for participant in conversation.participants:
+                sessions = connection_service.get_user_sessions(participant.id)
+                for session_id in sessions:
+                    await sio.emit('chat_message', message_payload, to=session_id)
+            print(f"[chat_message] Emitted to {len(conversation.participants)} participants")
+        else:
+            print(f"[chat_message] Conversation {conversation_id} not found")
+
+        # Send confirmation back to sender
         await sio.emit('message_sent', {**message_payload, 'confirmed': True}, to=sid)
     except Exception as e:
         print(f"Error handling chat message: {e}")
+        import traceback
+        traceback.print_exc()
         await sio.emit('error', {'message': str(e)}, to=sid)
 
 
@@ -86,11 +101,14 @@ async def message_read(sid, data):
 
         read_data = await chat_handler.handle_message_read(message_id, user_id)
 
-        await chat_handler.emit_message_read_to_conversation(
-            conversation_id=conversation_id,
-            read_data=read_data,
-            exclude_sid=sid
-        )
+        # Emit to all participants in conversation
+        conversation = chat_handler.chat_service.get_conversation(conversation_id)
+        if conversation:
+            for participant in conversation.participants:
+                sessions = connection_service.get_user_sessions(participant.id)
+                for session_id in sessions:
+                    if session_id != sid:
+                        await sio.emit('message_read', read_data, to=session_id)
 
         await sio.emit('message_read_confirmed', read_data, to=sid)
     except Exception as e:
@@ -116,11 +134,13 @@ async def delete_message(sid, data):
 
         delete_data = await chat_handler.handle_delete_message(data.get("message_id"))
 
-        await chat_handler.emit_message_deleted_to_conversation(
-            conversation_id=delete_data['conversation_id'],
-            delete_data=delete_data,
-            exclude_sid=sid
-        )
+        # Emit to all participants in conversation
+        conversation = chat_handler.chat_service.get_conversation(delete_data['conversation_id'])
+        if conversation:
+            for participant in conversation.participants:
+                sessions = connection_service.get_user_sessions(participant.id)
+                for session_id in sessions:
+                    await sio.emit('message_deleted', delete_data, to=session_id)
 
         await sio.emit('message_deleted_confirmed', delete_data, to=sid)
     except Exception as e:
@@ -150,11 +170,13 @@ async def message_edit(sid, data):
             data.get("content")
         )
 
-        await chat_handler.emit_message_edited_to_conversation(
-            conversation_id=edit_data['conversation_id'],
-            edit_data=edit_data,
-            exclude_sid=sid
-        )
+        # Emit to all participants in conversation
+        conversation = chat_handler.chat_service.get_conversation(edit_data['conversation_id'])
+        if conversation:
+            for participant in conversation.participants:
+                sessions = connection_service.get_user_sessions(participant.id)
+                for session_id in sessions:
+                    await sio.emit('message_edited', edit_data, to=session_id)
 
         await sio.emit('message_edited_confirmed', edit_data, to=sid)
     except Exception as e:
@@ -185,11 +207,13 @@ async def message_reaction(sid, data):
             "conversation_id": message.conversation_id,
         }
 
-        await chat_handler.emit_message_to_conversation(
-            conversation_id=message.conversation_id,
-            message_data=reaction_data,
-            exclude_sid=None
-        )
+        # Emit reaction to all participants in the conversation (including sender)
+        conversation = chat_handler.chat_service.get_conversation(message.conversation_id)
+        if conversation:
+            for participant in conversation.participants:
+                sessions = connection_service.get_user_sessions(participant.id)
+                for session_id in sessions:
+                    await sio.emit('message_reaction', reaction_data, to=session_id)
     except Exception as e:
         print(f"Error handling message reaction: {e}")
 
@@ -207,10 +231,13 @@ async def mark_as_read(sid, data):
 
         read_data = await chat_handler.handle_message_read(message_id, user_id)
 
-        await chat_handler.emit_message_read_to_conversation(
-            conversation_id=conversation_id,
-            read_data=read_data,
-        )
+        # Emit to all participants in conversation
+        conversation = chat_handler.chat_service.get_conversation(conversation_id)
+        if conversation:
+            for participant in conversation.participants:
+                sessions = connection_service.get_user_sessions(participant.id)
+                for session_id in sessions:
+                    await sio.emit('message_read', read_data, to=session_id)
 
         await sio.emit('message_read_confirmed', read_data, to=sid)
     except Exception as e:
@@ -236,17 +263,23 @@ async def typing(sid, data):
         conversation_id = data.get("conversation_id")
         is_typing = data.get("typing", True)
 
-        typing_payload = await chat_handler.handle_typing(
-            user=user,
-            conversation_id=conversation_id,
-            is_typing=is_typing,
-        )
+        # Create typing payload
+        typing_payload = {
+            "user_id": user_id,
+            "user_name": f"{user.first_name} {user.last_name}".strip(),
+            "conversation_id": conversation_id,
+            "typing": is_typing,
+        }
 
-        await chat_handler.emit_typing_to_conversation(
-            conversation_id=conversation_id,
-            typing_data=typing_payload,
-            exclude_sid=sid
-        )
+        # Emit to all participants except sender
+        conversation = chat_handler.chat_service.get_conversation(conversation_id)
+        if conversation:
+            for participant in conversation.participants:
+                if participant.id != user_id:  # Don't send to the typing user
+                    sessions = connection_service.get_user_sessions(participant.id)
+                    for session_id in sessions:
+                        event_name = 'typing_start' if is_typing else 'typing_stop'
+                        await sio.emit(event_name, typing_payload, to=session_id)
     except Exception as e:
         print(f"Error handling typing: {e}")
 

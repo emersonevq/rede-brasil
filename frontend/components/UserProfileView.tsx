@@ -21,7 +21,10 @@ import BottomNav from './BottomNav';
 import PostCard from './PostCard';
 import TopBar from './TopBar';
 import ProfilePhotoEditor from './ProfilePhotoEditor';
-import CoverPhotoEditor, { CoverTransform } from './CoverPhotoEditor';
+import CoverPhotoEditor, {
+  CoverTransform,
+  CoverData,
+} from './CoverPhotoEditor';
 import HighlightManager, { Highlight } from './HighlightManager';
 import {
   Heart,
@@ -1341,7 +1344,13 @@ export default function UserProfileView({
           imageUri={editingCoverPhoto}
           isVisible={coverEditorVisible}
           height={COVER_HEIGHT}
-          onSave={async ({ imageUri, scale, offsetX, offsetY }) => {
+          onSave={async ({
+            imageUri,
+            scale,
+            offsetX,
+            offsetY,
+            description,
+          }) => {
             try {
               const { uploadCoverPhoto } = await import('../utils/api');
               const { type, name } = guessMime(imageUri);
@@ -1361,7 +1370,11 @@ export default function UserProfileView({
                   : `${BASE_URL}${response.cover_photo}`
                 : imageUri;
               setCoverPhoto(coverPhotoUrl);
-              setUserData((prev) => ({ ...prev, cover: coverPhotoUrl }));
+              setUserData((prev) => ({
+                ...prev,
+                cover: coverPhotoUrl,
+                cover_description: description,
+              }));
               setCoverTransform({ scale, offsetX, offsetY });
               setCoverEditorVisible(false);
               setEditingCoverPhoto(null);
