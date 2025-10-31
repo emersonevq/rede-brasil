@@ -290,9 +290,8 @@ class ChatService:
             for conversation in conversations:
                 participant_ids = {p.id for p in conversation.participants}
                 if participant_ids == {user_id_1, user_id_2}:
-                    # Access participants to ensure they are loaded in memory
-                    _ = conversation.participants
-                    return conversation
+                    # Merge to create a detached but fully loaded copy
+                    return db.merge(conversation, load=False)
 
             # If no conversation found, create a new one
             participants = db.query(User).filter(User.id.in_([user_id_1, user_id_2])).all()
@@ -304,8 +303,7 @@ class ChatService:
             db.add(conversation)
             db.commit()
             db.refresh(conversation)
-            # Access participants to ensure they are loaded in memory before session closes
-            _ = conversation.participants
-            return conversation
+            # Merge to create a detached but fully loaded copy
+            return db.merge(conversation, load=False)
         finally:
             db.close()
