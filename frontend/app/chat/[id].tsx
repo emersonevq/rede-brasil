@@ -263,6 +263,11 @@ export default function ChatScreen() {
     })();
   }, []);
 
+  // Ensure socket is initialized
+  useEffect(() => {
+    initializeSocket();
+  }, []);
+
   // Load conversation and messages
   useEffect(() => {
     const loadConversation = async () => {
