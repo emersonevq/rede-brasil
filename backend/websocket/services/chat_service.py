@@ -59,7 +59,8 @@ class ChatService:
         try:
             conversations = db.query(Conversation).options(
                 selectinload(Conversation.participants),
-                selectinload(Conversation.messages)
+                selectinload(Conversation.messages).selectinload(Message.sender),
+                selectinload(Conversation.messages).selectinload(Message.read_by)
             ).join(
                 Conversation.participants
             ).filter(
@@ -82,7 +83,8 @@ class ChatService:
             search_query = f"%{query}%"
             conversations = db.query(Conversation).options(
                 selectinload(Conversation.participants),
-                selectinload(Conversation.messages)
+                selectinload(Conversation.messages).selectinload(Message.sender),
+                selectinload(Conversation.messages).selectinload(Message.read_by)
             ).join(
                 Conversation.participants
             ).filter(
