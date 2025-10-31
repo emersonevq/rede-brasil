@@ -709,23 +709,23 @@ export default function ChatScreen() {
           <View style={styles.headerContent}>
             {conversation &&
               !conversation.is_group &&
-              conversation.participants.length > 0 && (
-                (() => {
-                  const otherParticipant = conversation.participants.find(
+              conversation.participants.length > 0 &&
+              (() => {
+                const otherParticipant =
+                  conversation.participants.find(
                     (p) => p.id !== currentUserId,
                   ) || conversation.participants[0];
-                  return (
-                    <Image
-                      source={{
-                        uri:
-                          otherParticipant?.profile_photo ||
-                          `https://i.pravatar.cc/150?u=${otherParticipant?.id}`,
-                      }}
-                      style={styles.headerAvatar}
-                    />
-                  );
-                })()
-              )}
+                return (
+                  <Image
+                    source={{
+                      uri:
+                        otherParticipant?.profile_photo ||
+                        `https://i.pravatar.cc/150?u=${otherParticipant?.id}`,
+                    }}
+                    style={styles.headerAvatar}
+                  />
+                );
+              })()}
             <View style={styles.headerTextContainer}>
               <Text style={styles.headerTitle}>{getConversationTitle}</Text>
               {conversation?.is_group ? (
