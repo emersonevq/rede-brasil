@@ -165,6 +165,7 @@ export default function UserProfilePage() {
             name: f.name,
             avatar: f.avatar || '',
           })),
+          groups: [],
           testimonials: defaultProfileData.testimonials,
           highlights: defaultProfileData.highlights,
         };

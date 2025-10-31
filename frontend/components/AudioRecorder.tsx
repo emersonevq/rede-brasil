@@ -24,7 +24,9 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
   const [isSaving, setIsSaving] = useState(false);
   const recordingRef = useRef<Audio.Recording | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
-  const durationIntervalRef = useRef<NodeJS.Timeout>();
+  const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
 
   const requestAudioPermission = async () => {
     try {
@@ -202,7 +204,9 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
 
                 {isRecording && (
                   <View style={styles.recordingIndicator}>
-                    <View style={[styles.recordingDot, styles.recordingDotActive]} />
+                    <View
+                      style={[styles.recordingDot, styles.recordingDotActive]}
+                    />
                     <Text style={styles.recordingText}>Gravando...</Text>
                   </View>
                 )}
@@ -215,7 +219,12 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
                   onPress={isRecording ? stopRecording : startRecording}
                 >
                   {isRecording ? (
-                    <Square size={32} color="#fff" strokeWidth={2} fill="#ef4444" />
+                    <Square
+                      size={32}
+                      color="#fff"
+                      strokeWidth={2}
+                      fill="#ef4444"
+                    />
                   ) : (
                     <Mic size={32} color="#fff" strokeWidth={2} />
                   )}
@@ -337,7 +346,6 @@ const styles = StyleSheet.create({
   },
   recordingDotActive: {
     backgroundColor: '#ef4444',
-    animation: 'pulse',
   },
   recordingText: {
     fontSize: 14,

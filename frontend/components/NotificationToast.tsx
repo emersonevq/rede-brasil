@@ -11,6 +11,7 @@ import {
 import { X, Bell } from 'lucide-react-native';
 import { useNotification } from '../contexts/NotificationContext';
 import { absoluteUrl } from '../utils/api';
+import type { Notification } from '../utils/websocket';
 
 export default function NotificationToast() {
   const { notifications, removeNotification } = useNotification();
@@ -51,7 +52,7 @@ function NotificationItem({
   index,
   onClose,
 }: {
-  notification: (typeof notifications)[0];
+  notification: Notification;
   index: number;
   onClose: () => void;
 }) {

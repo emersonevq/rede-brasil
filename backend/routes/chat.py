@@ -385,30 +385,46 @@ async def get_or_create_dm(
 ):
     """Get or create a direct message conversation with a specific user"""
     try:
-        conversation = chat_service.get_or_create_dm_conversation(
-            user_id_1=current_user.id,
-            user_id_2=user_id
-        )
+        from database.session import SessionLocal
+        from sqlalchemy.orm import selectinload
 
-        participants = [
-            {
-                "id": p.id,
-                "username": p.username,
-                "first_name": p.first_name,
-                "last_name": p.last_name,
-                "profile_photo": p.profile_photo,
+        db = SessionLocal()
+        try:
+            # Get or create the conversation
+            conversation = chat_service.get_or_create_dm_conversation(
+                user_id_1=current_user.id,
+                user_id_2=user_id
+            )
+
+            # Reload conversation with eager loading within this session
+            conversation = db.query(Conversation).options(
+                selectinload(Conversation.participants)
+            ).filter(Conversation.id == conversation.id).first()
+
+            if not conversation:
+                raise HTTPException(status_code=404, detail="Conversation not found")
+
+            participants = [
+                {
+                    "id": p.id,
+                    "username": p.username,
+                    "first_name": p.first_name,
+                    "last_name": p.last_name,
+                    "profile_photo": p.profile_photo,
+                }
+                for p in conversation.participants
+            ]
+
+            return {
+                "id": conversation.id,
+                "name": conversation.name,
+                "is_group": conversation.is_group,
+                "participants": participants,
+                "created_at": conversation.created_at.isoformat(),
+                "updated_at": conversation.updated_at.isoformat(),
             }
-            for p in conversation.participants
-        ]
-
-        return {
-            "id": conversation.id,
-            "name": conversation.name,
-            "is_group": conversation.is_group,
-            "participants": participants,
-            "created_at": conversation.created_at.isoformat(),
-            "updated_at": conversation.updated_at.isoformat(),
-        }
+        finally:
+            db.close()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -235,7 +235,7 @@ export default function ChatScreen() {
   const [isSending, setIsSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState<User[]>([]);
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const socket = getSocket();
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
@@ -279,7 +279,7 @@ export default function ChatScreen() {
           updated_at: new Date().toISOString(),
         });
 
-        setMessages(messages);
+        setMessages(messages as unknown as Message[]);
       } catch (error) {
         console.error('Error loading messages:', error);
       } finally {

@@ -12,20 +12,20 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
-import {
-  Plus,
-  Clock,
-  ChevronRight,
-  Zap,
-  Heart,
-} from 'lucide-react-native';
+import { Plus, Clock, ChevronRight, Zap, Heart } from 'lucide-react-native';
 import TopBar from '../components/TopBar';
 import BottomNav from '../components/BottomNav';
-import StoryViewer, { StorySegment, StoryUser } from '../components/StoryViewer';
+import StoryViewer, {
+  StorySegment,
+  StoryUser,
+} from '../components/StoryViewer';
 
 const getDimensions = () => {
   if (Platform.OS === 'web') {
-    return { width: typeof window !== 'undefined' ? window.innerWidth : 375, height: typeof window !== 'undefined' ? window.innerHeight : 812 };
+    return {
+      width: typeof window !== 'undefined' ? window.innerWidth : 375,
+      height: typeof window !== 'undefined' ? window.innerHeight : 812,
+    };
   }
   return Dimensions.get('window');
 };
@@ -56,7 +56,8 @@ const STORIES: StoryItem[] = [
     postedAt: 'há 1h',
     postedAtHours: 1,
     caption: 'Explorando novas referências para o próximo produto. ✨',
-    cover: 'https://images.unsplash.com/photo-1527766833261-b09c3163a791?auto=format&fit=crop&w=1200&q=80',
+    cover:
+      'https://images.unsplash.com/photo-1527766833261-b09c3163a791?auto=format&fit=crop&w=1200&q=80',
     views: 234,
     likes: 89,
     category: 'Design',
@@ -80,7 +81,8 @@ const STORIES: StoryItem[] = [
     postedAt: 'há 2h',
     postedAtHours: 2,
     caption: 'Lançamos hoje nossa nova funcionalidade! 🚀',
-    cover: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=1200&q=80',
+    cover:
+      'https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=1200&q=80',
     views: 567,
     likes: 156,
     category: 'Desenvolvimento',
@@ -103,7 +105,8 @@ const STORIES: StoryItem[] = [
     postedAt: 'há 3h',
     postedAtHours: 3,
     caption: 'Workshop de pesquisa na comunidade. 🎤',
-    cover: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80',
+    cover:
+      'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80',
     views: 892,
     likes: 234,
     category: 'Comunidade',
@@ -127,7 +130,8 @@ const STORIES: StoryItem[] = [
     postedAt: 'há 30min',
     postedAtHours: 0.5,
     caption: 'Desenvolvendo a nova versão do app. Ficou incrível! 💻',
-    cover: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1200&q=80',
+    cover:
+      'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1200&q=80',
     views: 445,
     likes: 167,
     category: 'Desenvolvimento',
@@ -150,7 +154,8 @@ const STORIES: StoryItem[] = [
     postedAt: 'há 45min',
     postedAtHours: 0.75,
     caption: 'Novo projeto saindo do forno 🔥 Design minimalista é lindo',
-    cover: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=1200&q=80',
+    cover:
+      'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=1200&q=80',
     views: 623,
     likes: 201,
     category: 'Design',
@@ -174,7 +179,8 @@ const STORIES: StoryItem[] = [
     postedAt: 'há 2h',
     postedAtHours: 2,
     caption: 'Conferência de tech foi sensacional! Muita inspiração 💡',
-    cover: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80',
+    cover:
+      'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80',
     views: 334,
     likes: 112,
     category: 'Evento',
@@ -197,7 +203,8 @@ const STORIES: StoryItem[] = [
     postedAt: 'há 1h',
     postedAtHours: 1,
     caption: 'Dia de brainstorm criativo com a equipe! 🎨✨',
-    cover: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80',
+    cover:
+      'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80',
     views: 556,
     likes: 198,
     category: 'Trabalho',
@@ -220,7 +227,8 @@ const STORIES: StoryItem[] = [
     postedAt: 'há 3h',
     postedAtHours: 3,
     caption: 'Primeiro dia como product manager! Ansioso demais 🚀',
-    cover: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80',
+    cover:
+      'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80',
     views: 789,
     likes: 267,
     category: 'Carreira',
@@ -244,7 +252,8 @@ const STORIES: StoryItem[] = [
     postedAt: 'há 4h',
     postedAtHours: 4,
     caption: 'Projeto finalizado com sucesso! Time incrível 💪',
-    cover: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80',
+    cover:
+      'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80',
     views: 421,
     likes: 134,
     category: 'Projeto',
@@ -259,7 +268,13 @@ const STORIES: StoryItem[] = [
   },
 ];
 
-const StoryCard = ({ item, onPress }) => (
+const StoryCard = ({
+  item,
+  onPress,
+}: {
+  item: StoryItem;
+  onPress: () => void;
+}) => (
   <TouchableOpacity
     activeOpacity={0.95}
     onPress={onPress}
@@ -272,12 +287,12 @@ const StoryCard = ({ item, onPress }) => (
     />
 
     <View style={styles.progressContainer}>
-      {item.segments.map((segment, index) => (
+      {item.segments.map((segment: StorySegment, index: number) => (
         <View key={segment.id} style={styles.progressBar}>
           <View
             style={[
               styles.progressFill,
-              { width: index === 0 ? '100%' : '0%' }
+              { width: index === 0 ? '100%' : '0%' },
             ]}
           />
         </View>
@@ -288,18 +303,13 @@ const StoryCard = ({ item, onPress }) => (
 
     <View style={styles.storyHeader}>
       <View style={styles.avatarContainer}>
-        <Image
-          source={{ uri: item.user.avatar }}
-          style={styles.storyAvatar}
-        />
+        <Image source={{ uri: item.user.avatar }} style={styles.storyAvatar} />
         {item.user.online && <View style={styles.onlineDot} />}
       </View>
       <View style={styles.userInfo}>
         <View style={styles.nameRow}>
           <Text style={styles.storyName}>{item.user.name}</Text>
-          {item.isPremium && (
-            <Text style={styles.premiumBadge}>PRO</Text>
-          )}
+          {item.isPremium && <Text style={styles.premiumBadge}>PRO</Text>}
         </View>
         <View style={styles.timeRow}>
           <Clock size={13} color="#e2e8f0" strokeWidth={2} />
@@ -331,7 +341,13 @@ const StoryCard = ({ item, onPress }) => (
   </TouchableOpacity>
 );
 
-const CompactPreview = ({ item, onPress }) => (
+const CompactPreview = ({
+  item,
+  onPress,
+}: {
+  item: StoryItem;
+  onPress: () => void;
+}) => (
   <TouchableOpacity
     activeOpacity={0.9}
     onPress={onPress}
@@ -361,7 +377,9 @@ const CompactPreview = ({ item, onPress }) => (
       </View>
       <View style={styles.compactInfo}>
         <View style={styles.compactNameRow}>
-          <Text style={styles.compactName} numberOfLines={1}>{item.user.name}</Text>
+          <Text style={styles.compactName} numberOfLines={1}>
+            {item.user.name}
+          </Text>
         </View>
         <View style={styles.compactTimeRow}>
           <Clock size={11} color="#e2e8f0" strokeWidth={2} />
@@ -372,9 +390,7 @@ const CompactPreview = ({ item, onPress }) => (
   </TouchableOpacity>
 );
 
-const Eye = (props) => (
-  <Heart {...props} />
-);
+const Eye = (props: any) => <Heart {...props} />;
 
 export default function StoryScreen() {
   const { width, height } = useWindowDimensions();
@@ -400,7 +416,7 @@ export default function StoryScreen() {
 
   const filteredStories = useMemo(() => {
     if (filter === 'recent') {
-      return allStories.filter(story => story.postedAtHours <= 5);
+      return allStories.filter((story) => story.postedAtHours <= 5);
     }
     return allStories;
   }, [filter, allStories]);
@@ -408,13 +424,10 @@ export default function StoryScreen() {
   const renderItem = useCallback(
     ({ item }: { item: StoryItem }) => (
       <View style={styles.storyItemWrapper}>
-        <StoryCard
-          item={item}
-          onPress={() => open(item)}
-        />
+        <StoryCard item={item} onPress={() => open(item)} />
       </View>
     ),
-    [open]
+    [open],
   );
 
   const listHeader = useMemo(
@@ -432,20 +445,40 @@ export default function StoryScreen() {
         {/* Filtros */}
         <View style={styles.filtersContainer}>
           <TouchableOpacity
-            style={[styles.filterChip, filter === 'all' && styles.filterChipActive]}
+            style={[
+              styles.filterChip,
+              filter === 'all' && styles.filterChipActive,
+            ]}
             onPress={() => setFilter('all')}
           >
-            <Text style={[styles.filterChipText, filter === 'all' && styles.filterChipTextActive]}>
+            <Text
+              style={[
+                styles.filterChipText,
+                filter === 'all' && styles.filterChipTextActive,
+              ]}
+            >
               Todos
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.filterChip, filter === 'recent' && styles.filterChipActive]}
+            style={[
+              styles.filterChip,
+              filter === 'recent' && styles.filterChipActive,
+            ]}
             onPress={() => setFilter('recent')}
           >
-            <Zap size={14} color={filter === 'recent' ? '#ffffff' : '#64748b'} strokeWidth={2} />
-            <Text style={[styles.filterChipText, filter === 'recent' && styles.filterChipTextActive]}>
+            <Zap
+              size={14}
+              color={filter === 'recent' ? '#ffffff' : '#64748b'}
+              strokeWidth={2}
+            />
+            <Text
+              style={[
+                styles.filterChipText,
+                filter === 'recent' && styles.filterChipTextActive,
+              ]}
+            >
               Recentes
             </Text>
           </TouchableOpacity>
@@ -454,7 +487,9 @@ export default function StoryScreen() {
         {/* Card Criar Story */}
         <TouchableOpacity
           activeOpacity={0.85}
-          onPress={() => { router.push('/story/create'); }}
+          onPress={() => {
+            router.push('/story/create');
+          }}
           style={styles.addCard}
         >
           <View style={styles.addCircle}>
@@ -462,9 +497,7 @@ export default function StoryScreen() {
           </View>
           <View style={styles.addContent}>
             <Text style={styles.addTitle}>Criar story</Text>
-            <Text style={styles.addSubtitle}>
-              Compartilhe seu momento
-            </Text>
+            <Text style={styles.addSubtitle}>Compartilhe seu momento</Text>
           </View>
           <ChevronRight size={20} color="#64748b" strokeWidth={2} />
         </TouchableOpacity>
@@ -473,7 +506,9 @@ export default function StoryScreen() {
         <View style={styles.scrollHint}>
           <View style={styles.scrollHintContent}>
             <ChevronRight size={16} color="#3b82f6" strokeWidth={2.5} />
-            <Text style={styles.scrollHintText}>Arraste para o lado para ver todos os stories</Text>
+            <Text style={styles.scrollHintText}>
+              Arraste para o lado para ver todos os stories
+            </Text>
           </View>
         </View>
 
@@ -481,7 +516,7 @@ export default function StoryScreen() {
         <View style={styles.previewsContainer}>
           <Text style={styles.previewsTitle}>Em destaque</Text>
           <View style={styles.previewsList}>
-            {filteredStories.slice(0, 3).map(story => (
+            {filteredStories.slice(0, 3).map((story) => (
               <CompactPreview
                 key={story.id}
                 item={story}
@@ -492,7 +527,7 @@ export default function StoryScreen() {
         </View>
       </View>
     ),
-    [filter, filteredStories, open]
+    [filter, filteredStories, open],
   );
 
   return (
@@ -503,7 +538,7 @@ export default function StoryScreen() {
       <FlatList
         ref={listRef}
         data={filteredStories}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         renderItem={renderItem}
         horizontal
         pagingEnabled

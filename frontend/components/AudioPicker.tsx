@@ -35,10 +35,10 @@ export default function AudioPicker({ onAudioSelected }: AudioPickerProps) {
       setIsLoading(true);
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Audio,
+        mediaTypes: ['audio'],
         allowsEditing: false,
         quality: 1,
-      });
+      } as any);
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
@@ -48,7 +48,7 @@ export default function AudioPicker({ onAudioSelected }: AudioPickerProps) {
           const sound = new Audio.Sound();
           await sound.loadAsync({ uri: asset.uri });
           const status = await sound.getStatusAsync();
-          duration = Math.floor((status.durationMillis || 0) / 1000);
+          duration = Math.floor(((status as any).durationMillis || 0) / 1000);
           await sound.unloadAsync();
         } catch (e) {
           console.warn('Could not get audio duration:', e);
@@ -85,7 +85,7 @@ export default function AudioPicker({ onAudioSelected }: AudioPickerProps) {
       setIsPlaying(true);
 
       sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.didJustFinish) {
+        if ((status as any).didJustFinish) {
           setIsPlaying(false);
         }
       });

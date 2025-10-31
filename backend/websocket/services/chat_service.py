@@ -273,31 +273,47 @@ class ChatService:
     def get_or_create_dm_conversation(user_id_1: int, user_id_2: int) -> Conversation:
         """Get or create a direct message conversation between two users"""
         db = SessionLocal()
+        conversation = None
         try:
-            conversation = db.query(Conversation).join(
-                Conversation.participants
+            from sqlalchemy.orm import selectinload
+
+            # Find existing DM conversation between these two users with eager loading
+            conversations = db.query(Conversation).options(
+                selectinload(Conversation.participants)
             ).filter(
                 and_(
                     Conversation.is_group == False,
-                    Conversation.deleted_at == None,
-                    User.id.in_([user_id_1, user_id_2])
+                    Conversation.deleted_at == None
                 )
-            ).group_by(Conversation.id).having(
-                func.count(User.id) == 2
-            ).first()
+            ).all()
 
-            if conversation:
-                return conversation
+            # Check each non-deleted DM conversation to see if it matches
+            for conv in conversations:
+                participant_ids = {p.id for p in conv.participants}
+                if participant_ids == {user_id_1, user_id_2}:
+                    conversation = conv
+                    break
 
-            participants = db.query(User).filter(User.id.in_([user_id_1, user_id_2])).all()
-            conversation = Conversation(
-                is_group=False,
-                created_by_id=user_id_1
-            )
-            conversation.participants = participants
-            db.add(conversation)
-            db.commit()
-            db.refresh(conversation)
+            # If no conversation found, create a new one
+            if not conversation:
+                participants = db.query(User).filter(User.id.in_([user_id_1, user_id_2])).all()
+                conversation = Conversation(
+                    is_group=False,
+                    created_by_id=user_id_1
+                )
+                conversation.participants = participants
+                db.add(conversation)
+                db.commit()
+                db.refresh(conversation)
+
+            # Make sure participants are loaded before returning
+            # by iterating through them to trigger the load
+            participants_list = list(conversation.participants)
+
+            # Explicitly expunge the conversation to detach from session
+            # but keep the data in memory (already loaded above)
+            db.expunge(conversation)
+
             return conversation
         finally:
             db.close()
