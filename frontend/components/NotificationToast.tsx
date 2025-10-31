@@ -52,7 +52,7 @@ function NotificationItem({
   index,
   onClose,
 }: {
-  notification: (typeof notifications)[0];
+  notification: Notification;
   index: number;
   onClose: () => void;
 }) {
