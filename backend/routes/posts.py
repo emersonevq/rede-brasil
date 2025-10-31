@@ -25,6 +25,7 @@ def list_posts(db: Session = Depends(get_db)):
             created_at=p.created_at,
             user_id=p.user_id,
             user_name=f"{p.author.first_name} {p.author.last_name}" if p.author else "Anônimo",
+            unique_id=p.unique_id,
             user_profile_photo=p.author.profile_photo if p.author else None,
             user_cover_photo=p.author.cover_photo if p.author else None,
         ) for p in posts
