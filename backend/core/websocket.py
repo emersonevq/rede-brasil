@@ -101,11 +101,14 @@ async def message_read(sid, data):
 
         read_data = await chat_handler.handle_message_read(message_id, user_id)
 
-        await chat_handler.emit_message_read_to_conversation(
-            conversation_id=conversation_id,
-            read_data=read_data,
-            exclude_sid=sid
-        )
+        # Emit to all participants in conversation
+        conversation = chat_handler.chat_service.get_conversation(conversation_id)
+        if conversation:
+            for participant in conversation.participants:
+                sessions = connection_service.get_user_sessions(participant.id)
+                for session_id in sessions:
+                    if session_id != sid:
+                        await sio.emit('message_read', read_data, to=session_id)
 
         await sio.emit('message_read_confirmed', read_data, to=sid)
     except Exception as e:
@@ -131,11 +134,13 @@ async def delete_message(sid, data):
 
         delete_data = await chat_handler.handle_delete_message(data.get("message_id"))
 
-        await chat_handler.emit_message_deleted_to_conversation(
-            conversation_id=delete_data['conversation_id'],
-            delete_data=delete_data,
-            exclude_sid=sid
-        )
+        # Emit to all participants in conversation
+        conversation = chat_handler.chat_service.get_conversation(delete_data['conversation_id'])
+        if conversation:
+            for participant in conversation.participants:
+                sessions = connection_service.get_user_sessions(participant.id)
+                for session_id in sessions:
+                    await sio.emit('message_deleted', delete_data, to=session_id)
 
         await sio.emit('message_deleted_confirmed', delete_data, to=sid)
     except Exception as e:
@@ -165,11 +170,13 @@ async def message_edit(sid, data):
             data.get("content")
         )
 
-        await chat_handler.emit_message_edited_to_conversation(
-            conversation_id=edit_data['conversation_id'],
-            edit_data=edit_data,
-            exclude_sid=sid
-        )
+        # Emit to all participants in conversation
+        conversation = chat_handler.chat_service.get_conversation(edit_data['conversation_id'])
+        if conversation:
+            for participant in conversation.participants:
+                sessions = connection_service.get_user_sessions(participant.id)
+                for session_id in sessions:
+                    await sio.emit('message_edited', edit_data, to=session_id)
 
         await sio.emit('message_edited_confirmed', edit_data, to=sid)
     except Exception as e:
@@ -224,10 +231,13 @@ async def mark_as_read(sid, data):
 
         read_data = await chat_handler.handle_message_read(message_id, user_id)
 
-        await chat_handler.emit_message_read_to_conversation(
-            conversation_id=conversation_id,
-            read_data=read_data,
-        )
+        # Emit to all participants in conversation
+        conversation = chat_handler.chat_service.get_conversation(conversation_id)
+        if conversation:
+            for participant in conversation.participants:
+                sessions = connection_service.get_user_sessions(participant.id)
+                for session_id in sessions:
+                    await sio.emit('message_read', read_data, to=session_id)
 
         await sio.emit('message_read_confirmed', read_data, to=sid)
     except Exception as e:
