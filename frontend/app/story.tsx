@@ -372,7 +372,7 @@ const CompactPreview = ({ item, onPress }) => (
   </TouchableOpacity>
 );
 
-const Eye = (props) => (
+const Eye = (props: any) => (
   <Heart {...props} />
 );
 
