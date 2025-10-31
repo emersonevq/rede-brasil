@@ -3,7 +3,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
-  SafeAreaView,
   View,
   Text,
   ActivityIndicator,
@@ -11,6 +10,7 @@ import {
   ActionSheetIOS,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Video } from 'expo-av';
