@@ -274,21 +274,23 @@ class ChatService:
         """Get or create a direct message conversation between two users"""
         db = SessionLocal()
         try:
-            conversation = db.query(Conversation).join(
-                Conversation.participants
-            ).filter(
+            # Find existing DM conversation between these two users
+            from sqlalchemy import func as sql_func
+
+            conversations = db.query(Conversation).filter(
                 and_(
                     Conversation.is_group == False,
-                    Conversation.deleted_at == None,
-                    User.id.in_([user_id_1, user_id_2])
+                    Conversation.deleted_at == None
                 )
-            ).group_by(Conversation.id).having(
-                func.count(User.id) == 2
-            ).first()
+            ).all()
 
-            if conversation:
-                return conversation
+            # Check each non-deleted DM conversation to see if it matches
+            for conversation in conversations:
+                participant_ids = {p.id for p in conversation.participants}
+                if participant_ids == {user_id_1, user_id_2}:
+                    return conversation
 
+            # If no conversation found, create a new one
             participants = db.query(User).filter(User.id.in_([user_id_1, user_id_2])).all()
             conversation = Conversation(
                 is_group=False,
