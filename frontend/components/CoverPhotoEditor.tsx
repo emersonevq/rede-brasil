@@ -53,7 +53,7 @@ const getDimensions = () => {
   return Dimensions.get('window');
 };
 const { width: SCREEN_WIDTH } = getDimensions();
-const MIN_SCALE = 1;
+const MIN_SCALE = 0.8;
 const MAX_SCALE = 3;
 
 // Modal de descrição
