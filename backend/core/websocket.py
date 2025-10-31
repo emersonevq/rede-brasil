@@ -64,8 +64,7 @@ async def chat_message(sid, data):
 
         await chat_handler.emit_message_to_conversation(
             conversation_id=conversation_id,
-            message_data=message_payload,
-            exclude_sid=sid
+            message_data=message_payload
         )
 
         await sio.emit('message_sent', {**message_payload, 'confirmed': True}, to=sid)
