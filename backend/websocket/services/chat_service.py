@@ -273,6 +273,7 @@ class ChatService:
     def get_or_create_dm_conversation(user_id_1: int, user_id_2: int) -> Conversation:
         """Get or create a direct message conversation between two users"""
         db = SessionLocal()
+        conversation = None
         try:
             from sqlalchemy.orm import selectinload
 
@@ -287,24 +288,30 @@ class ChatService:
             ).all()
 
             # Check each non-deleted DM conversation to see if it matches
-            for conversation in conversations:
-                participant_ids = {p.id for p in conversation.participants}
+            for conv in conversations:
+                participant_ids = {p.id for p in conv.participants}
                 if participant_ids == {user_id_1, user_id_2}:
-                    return conversation
+                    conversation = conv
+                    break
 
             # If no conversation found, create a new one
-            participants = db.query(User).filter(User.id.in_([user_id_1, user_id_2])).all()
-            conversation = Conversation(
-                is_group=False,
-                created_by_id=user_id_1
-            )
-            conversation.participants = participants
-            db.add(conversation)
-            db.commit()
-            # Get a fresh instance with eager loading
-            conversation = db.query(Conversation).options(
-                selectinload(Conversation.participants)
-            ).filter(Conversation.id == conversation.id).first()
+            if not conversation:
+                participants = db.query(User).filter(User.id.in_([user_id_1, user_id_2])).all()
+                conversation = Conversation(
+                    is_group=False,
+                    created_by_id=user_id_1
+                )
+                conversation.participants = participants
+                db.add(conversation)
+                db.commit()
+                db.refresh(conversation)
+
+            # Access all participant data while session is still open
+            # This ensures the data is loaded into the object's cache
+            for p in conversation.participants:
+                _ = p.id
+                _ = p.username
+
             return conversation
         finally:
             db.close()
