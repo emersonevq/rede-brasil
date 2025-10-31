@@ -29,7 +29,7 @@ export default function VideoMedia({ onVideoSelected }: VideoMediaProps) {
     uri: string;
     duration?: number;
   } | null>(null);
-  
+
   // Camera recording state
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -38,7 +38,9 @@ export default function VideoMedia({ onVideoSelected }: VideoMediaProps) {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const videoRef = useRef<Video>(null);
-  const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
 
   useEffect(() => {
     return () => {
@@ -310,10 +312,7 @@ export default function VideoMedia({ onVideoSelected }: VideoMediaProps) {
               </View>
 
               <View style={styles.previewControls}>
-                <TouchableOpacity
-                  style={styles.playButton}
-                  onPress={playVideo}
-                >
+                <TouchableOpacity style={styles.playButton} onPress={playVideo}>
                   <Play size={24} color="#fff" fill="#fff" strokeWidth={0} />
                 </TouchableOpacity>
 

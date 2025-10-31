@@ -707,16 +707,18 @@ export default function ChatScreen() {
           </TouchableOpacity>
 
           <View style={styles.headerContent}>
-            {conversation && !conversation.is_group && conversation.participants.length > 0 && (
-              <Image
-                source={{
-                  uri:
-                    conversation.participants[0]?.profile_photo ||
-                    `https://i.pravatar.cc/150?u=${conversation.participants[0]?.id}`,
-                }}
-                style={styles.headerAvatar}
-              />
-            )}
+            {conversation &&
+              !conversation.is_group &&
+              conversation.participants.length > 0 && (
+                <Image
+                  source={{
+                    uri:
+                      conversation.participants[0]?.profile_photo ||
+                      `https://i.pravatar.cc/150?u=${conversation.participants[0]?.id}`,
+                  }}
+                  style={styles.headerAvatar}
+                />
+              )}
             <View style={styles.headerTextContainer}>
               <Text style={styles.headerTitle}>{getConversationTitle}</Text>
               {conversation?.is_group ? (

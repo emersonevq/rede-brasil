@@ -166,11 +166,11 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
       <View style={styles.inlineContainer}>
         <View style={styles.inlineRecordingBar}>
           <View style={styles.recordingIndicator}>
-            <View
-              style={[styles.recordingDot, styles.recordingDotActive]}
-            />
+            <View style={[styles.recordingDot, styles.recordingDotActive]} />
             <Text style={styles.recordingText}>
-              {isRecording ? `Gravando... ${formatDuration(recordingDuration)}` : `Áudio: ${formatDuration(recordingDuration)}`}
+              {isRecording
+                ? `Gravando... ${formatDuration(recordingDuration)}`
+                : `Áudio: ${formatDuration(recordingDuration)}`}
             </Text>
           </View>
 
