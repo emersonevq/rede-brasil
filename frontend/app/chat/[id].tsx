@@ -185,49 +185,6 @@ const MessageBubble = ({
             ))}
           </View>
         )}
-
-        {showActions && (
-          <View style={styles.messageActions}>
-            {onReact && (
-              <View style={styles.emojiRow}>
-                {emojis?.slice(0, 5).map((emoji) => (
-                  <TouchableOpacity
-                    key={emoji}
-                    style={styles.emojiBtn}
-                    onPress={() => {
-                      onReact(emoji, message.id);
-                      setShowActions(false);
-                    }}
-                  >
-                    <Text style={styles.emoji}>{emoji}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-            {isOwn && onEdit && (
-              <TouchableOpacity
-                style={styles.actionBtn}
-                onPress={() => {
-                  onEdit(message);
-                  setShowActions(false);
-                }}
-              >
-                <Text style={styles.actionBtnText}>Editar</Text>
-              </TouchableOpacity>
-            )}
-            {isOwn && onDelete && (
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.actionBtnDelete]}
-                onPress={() => {
-                  onDelete(message.id);
-                  setShowActions(false);
-                }}
-              >
-                <Text style={styles.actionBtnTextDelete}>Deletar</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
       </TouchableOpacity>
     </View>
   );
