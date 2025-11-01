@@ -1020,7 +1020,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   messagesList: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 12,
   },
   messageBubbleContainer: {
