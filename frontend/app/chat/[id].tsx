@@ -85,6 +85,7 @@ const MessageBubble = ({
   onEdit,
   onDelete,
   onReact,
+  onLongPress,
   isSelected,
   onSelect,
   showEmojiPicker,
@@ -96,6 +97,7 @@ const MessageBubble = ({
   onEdit?: (message: Message) => void;
   onDelete?: (messageId: number) => void;
   onReact?: (emoji: string, messageId: number) => void;
+  onLongPress?: (messageId: number) => void;
   isSelected?: boolean;
   onSelect?: () => void;
   showEmojiPicker?: boolean;
@@ -107,8 +109,6 @@ const MessageBubble = ({
     hour: '2-digit',
     minute: '2-digit',
   });
-
-  const [showActions, setShowActions] = useState(false);
 
   return (
     <View
