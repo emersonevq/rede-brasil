@@ -182,7 +182,9 @@ const ChatItem = ({
       <TouchableOpacity
         style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
         onPress={onPress}
+        onLongPress={showContextMenu}
         activeOpacity={0.7}
+        delayLongPress={400}
       >
         <View style={styles.avatarContainer}>
           <Image
