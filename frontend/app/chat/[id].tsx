@@ -212,7 +212,9 @@ export default function ChatScreen() {
   );
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [reactionTargetId, setReactionTargetId] = useState<number | null>(null);
-  const [contextMenuMessageId, setContextMenuMessageId] = useState<number | null>(null);
+  const [contextMenuMessageId, setContextMenuMessageId] = useState<
+    number | null
+  >(null);
 
   const emojis = ['👍', '❤️', '😂', '😢', '😱', '👎', '🔥', '⭐', '🎉', '💯'];
 
