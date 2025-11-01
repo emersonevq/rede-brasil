@@ -134,7 +134,8 @@ const MessageBubble = ({
           isOwn && styles.messageBubbleOwn,
           isSelected && styles.messageBubbleSelected,
         ]}
-        onLongPress={() => setShowActions(!showActions)}
+        onLongPress={() => onLongPress?.(message.id)}
+        delayLongPress={400}
         activeOpacity={0.8}
       >
         {message.content_type === 'text' && (
