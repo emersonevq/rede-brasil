@@ -71,11 +71,13 @@ const ChatItem = ({
   item,
   onPress,
   onDelete,
+  onArchive,
   currentUserId,
 }: {
   item: ChatItem;
   onPress: () => void;
   onDelete: (id: number) => void;
+  onArchive: (id: number) => void;
   currentUserId?: number;
 }) => {
   const isUnread = item.unread_count > 0;
