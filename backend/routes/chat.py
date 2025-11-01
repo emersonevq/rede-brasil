@@ -90,6 +90,7 @@ async def get_conversations(
     current_user: User = Depends(get_current_user),
     limit: int = 50,
     offset: int = 0,
+    include_archived: bool = False,
 ):
     """Get all conversations for the current user"""
     from database.session import SessionLocal
@@ -97,7 +98,7 @@ async def get_conversations(
 
     db = SessionLocal()
     try:
-        conversations = db.query(Conversation).options(
+        query = db.query(Conversation).options(
             selectinload(Conversation.participants),
             selectinload(Conversation.messages).selectinload(Message.sender),
             selectinload(Conversation.messages).selectinload(Message.read_by)
@@ -108,7 +109,12 @@ async def get_conversations(
                 User.id == current_user.id,
                 Conversation.deleted_at == None
             )
-        ).order_by(
+        )
+
+        if not include_archived:
+            query = query.filter(Conversation.archived_at == None)
+
+        conversations = query.order_by(
             Conversation.updated_at.desc()
         ).limit(limit).offset(offset).all()
 
