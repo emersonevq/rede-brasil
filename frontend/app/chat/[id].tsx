@@ -871,6 +871,7 @@ export default function ChatScreen() {
               onEdit={handleEditMessage}
               onDelete={handleDeleteMessage}
               onReact={handleAddReaction}
+              onLongPress={showMessageContextMenu}
               isSelected={selectedMessageId === item.id}
               onSelect={() => setSelectedMessageId(item.id)}
               showEmojiPicker={showEmojiPicker && reactionTargetId === item.id}
