@@ -90,6 +90,7 @@ async def get_conversations(
     current_user: User = Depends(get_current_user),
     limit: int = 50,
     offset: int = 0,
+    include_archived: bool = False,
 ):
     """Get all conversations for the current user"""
     from database.session import SessionLocal
@@ -97,7 +98,7 @@ async def get_conversations(
 
     db = SessionLocal()
     try:
-        conversations = db.query(Conversation).options(
+        query = db.query(Conversation).options(
             selectinload(Conversation.participants),
             selectinload(Conversation.messages).selectinload(Message.sender),
             selectinload(Conversation.messages).selectinload(Message.read_by)
@@ -108,7 +109,12 @@ async def get_conversations(
                 User.id == current_user.id,
                 Conversation.deleted_at == None
             )
-        ).order_by(
+        )
+
+        if not include_archived:
+            query = query.filter(Conversation.archived_at == None)
+
+        conversations = query.order_by(
             Conversation.updated_at.desc()
         ).limit(limit).offset(offset).all()
 
@@ -415,6 +421,80 @@ async def delete_conversation(
         chat_service.delete_conversation(conversation_id)
 
         return {"message": "Conversation deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/conversations/{conversation_id}/archive")
+async def archive_conversation(
+    conversation_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    """Archive a conversation"""
+    try:
+        from database.session import SessionLocal
+
+        db = SessionLocal()
+        try:
+            conversation = db.query(Conversation).filter(
+                Conversation.id == conversation_id
+            ).first()
+
+            if not conversation:
+                raise HTTPException(status_code=404, detail="Conversation not found")
+
+            # Check if user is a participant
+            participant_ids = [p.id for p in conversation.participants]
+            if current_user.id not in participant_ids:
+                raise HTTPException(status_code=403, detail="Not a participant of this conversation")
+
+            # Archive the conversation
+            conversation.archived_at = datetime.utcnow()
+            db.commit()
+            db.refresh(conversation)
+
+            return {"message": "Conversation archived successfully", "conversation_id": conversation_id}
+        finally:
+            db.close()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/conversations/{conversation_id}/unarchive")
+async def unarchive_conversation(
+    conversation_id: int,
+    current_user: User = Depends(get_current_user),
+):
+    """Unarchive a conversation"""
+    try:
+        from database.session import SessionLocal
+
+        db = SessionLocal()
+        try:
+            conversation = db.query(Conversation).filter(
+                Conversation.id == conversation_id
+            ).first()
+
+            if not conversation:
+                raise HTTPException(status_code=404, detail="Conversation not found")
+
+            # Check if user is a participant
+            participant_ids = [p.id for p in conversation.participants]
+            if current_user.id not in participant_ids:
+                raise HTTPException(status_code=403, detail="Not a participant of this conversation")
+
+            # Unarchive the conversation
+            conversation.archived_at = None
+            db.commit()
+            db.refresh(conversation)
+
+            return {"message": "Conversation unarchived successfully", "conversation_id": conversation_id}
+        finally:
+            db.close()
     except HTTPException:
         raise
     except Exception as e:

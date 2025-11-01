@@ -11,6 +11,9 @@ import {
   Image,
   ActivityIndicator,
   Dimensions,
+  ActionSheetIOS,
+  Alert,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -25,6 +28,7 @@ import {
   sendChatMessage,
   editMessage,
   deleteMessage,
+  absoluteUrl,
 } from '../../utils/api';
 import { getSocket, initializeSocket } from '../../utils/websocket';
 import * as ImagePicker from 'expo-image-picker';
@@ -82,6 +86,7 @@ const MessageBubble = ({
   onEdit,
   onDelete,
   onReact,
+  onLongPress,
   isSelected,
   onSelect,
   showEmojiPicker,
@@ -93,6 +98,7 @@ const MessageBubble = ({
   onEdit?: (message: Message) => void;
   onDelete?: (messageId: number) => void;
   onReact?: (emoji: string, messageId: number) => void;
+  onLongPress?: (messageId: number) => void;
   isSelected?: boolean;
   onSelect?: () => void;
   showEmojiPicker?: boolean;
@@ -105,8 +111,6 @@ const MessageBubble = ({
     minute: '2-digit',
   });
 
-  const [showActions, setShowActions] = useState(false);
-
   return (
     <View
       style={[
@@ -118,7 +122,7 @@ const MessageBubble = ({
         <Image
           source={{
             uri:
-              message.sender.profile_photo ||
+              absoluteUrl(message.sender.profile_photo) ||
               `https://i.pravatar.cc/150?u=${message.sender.id}`,
           }}
           style={styles.messageSenderAvatar}
@@ -131,7 +135,8 @@ const MessageBubble = ({
           isOwn && styles.messageBubbleOwn,
           isSelected && styles.messageBubbleSelected,
         ]}
-        onLongPress={() => setShowActions(!showActions)}
+        onLongPress={() => onLongPress?.(message.id)}
+        delayLongPress={400}
         activeOpacity={0.8}
       >
         {message.content_type === 'text' && (
@@ -181,49 +186,6 @@ const MessageBubble = ({
             ))}
           </View>
         )}
-
-        {showActions && (
-          <View style={styles.messageActions}>
-            {onReact && (
-              <View style={styles.emojiRow}>
-                {emojis?.slice(0, 5).map((emoji) => (
-                  <TouchableOpacity
-                    key={emoji}
-                    style={styles.emojiBtn}
-                    onPress={() => {
-                      onReact(emoji, message.id);
-                      setShowActions(false);
-                    }}
-                  >
-                    <Text style={styles.emoji}>{emoji}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-            {isOwn && onEdit && (
-              <TouchableOpacity
-                style={styles.actionBtn}
-                onPress={() => {
-                  onEdit(message);
-                  setShowActions(false);
-                }}
-              >
-                <Text style={styles.actionBtnText}>Editar</Text>
-              </TouchableOpacity>
-            )}
-            {isOwn && onDelete && (
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.actionBtnDelete]}
-                onPress={() => {
-                  onDelete(message.id);
-                  setShowActions(false);
-                }}
-              >
-                <Text style={styles.actionBtnTextDelete}>Deletar</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
       </TouchableOpacity>
     </View>
   );
@@ -250,6 +212,9 @@ export default function ChatScreen() {
   );
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [reactionTargetId, setReactionTargetId] = useState<number | null>(null);
+  const [contextMenuMessageId, setContextMenuMessageId] = useState<
+    number | null
+  >(null);
 
   const emojis = ['👍', '❤️', '😂', '😢', '😱', '👎', '🔥', '⭐', '🎉', '💯'];
 
@@ -766,6 +731,57 @@ export default function ChatScreen() {
     }
   };
 
+  const showMessageContextMenu = (messageId: number) => {
+    const message = messages.find((m) => m.id === messageId);
+    if (!message) return;
+
+    const isOwn = message.sender.id === currentUserId;
+    const options: string[] = ['Cancelar', 'Reagir'];
+
+    if (isOwn) {
+      options.push('Deletar');
+    } else {
+      options.push('Deletar');
+    }
+
+    const cancelButtonIndex = 0;
+    const destructiveButtonIndex = options.indexOf('Deletar');
+
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options,
+        cancelButtonIndex,
+        destructiveButtonIndex,
+        title: 'Opções da Mensagem',
+      },
+      (buttonIndex) => {
+        if (buttonIndex === 1) {
+          // Reagir
+          setReactionTargetId(messageId);
+        } else if (buttonIndex === destructiveButtonIndex) {
+          // Deletar
+          Alert.alert(
+            'Deletar mensagem',
+            'Tem certeza que deseja deletar esta mensagem?',
+            [
+              {
+                text: 'Cancelar',
+                style: 'cancel',
+              },
+              {
+                text: 'Deletar',
+                onPress: () => {
+                  handleDeleteMessage(messageId);
+                },
+                style: 'destructive',
+              },
+            ],
+          );
+        }
+      },
+    );
+  };
+
   const getConversationTitle = useMemo(() => {
     if (!conversation) return 'Carregando...';
     if (conversation.name) return conversation.name;
@@ -820,7 +836,7 @@ export default function ChatScreen() {
                   <Image
                     source={{
                       uri:
-                        otherParticipant?.profile_photo ||
+                        absoluteUrl(otherParticipant?.profile_photo) ||
                         `https://i.pravatar.cc/150?u=${otherParticipant?.id}`,
                     }}
                     style={styles.headerAvatar}
@@ -858,6 +874,7 @@ export default function ChatScreen() {
               onEdit={handleEditMessage}
               onDelete={handleDeleteMessage}
               onReact={handleAddReaction}
+              onLongPress={showMessageContextMenu}
               isSelected={selectedMessageId === item.id}
               onSelect={() => setSelectedMessageId(item.id)}
               showEmojiPicker={showEmojiPicker && reactionTargetId === item.id}
@@ -1020,7 +1037,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   messagesList: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 12,
   },
   messageBubbleContainer: {
@@ -1028,9 +1045,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     marginVertical: 6,
     gap: 8,
+    paddingHorizontal: 0,
   },
   messageBubbleContainerOwn: {
     justifyContent: 'flex-end',
+    marginLeft: 'auto',
   },
   messageSenderAvatar: {
     width: 32,
@@ -1183,31 +1202,33 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   inputContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 12,
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
+    backgroundColor: '#ffffff',
   },
   mediaBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     gap: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    marginBottom: 8,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 8,
+    gap: 10,
   },
   mediaButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   input: {
     flex: 1,
@@ -1218,11 +1239,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#0f172a',
     maxHeight: 100,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   sendButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#3b82f6',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1231,12 +1254,14 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   micButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   emptyState: {
     alignItems: 'center',
