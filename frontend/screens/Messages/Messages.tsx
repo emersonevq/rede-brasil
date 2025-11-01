@@ -143,6 +143,40 @@ const ChatItem = ({
     );
   };
 
+  const showContextMenu = () => {
+    const options = [
+      'Cancelar',
+      'Criar Grupo',
+      'Arquivar Conversa',
+      'Deletar Conversa',
+    ];
+
+    const cancelButtonIndex = 0;
+    const destructiveButtonIndex = 3;
+
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options,
+        cancelButtonIndex,
+        destructiveButtonIndex,
+        title: 'Opções da Conversa',
+      },
+      (buttonIndex) => {
+        if (buttonIndex === 1) {
+          // Create Group - navigate to create group screen
+          // This will be implemented in the future
+          Alert.alert('Criar Grupo', 'Funcionalidade em desenvolvimento');
+        } else if (buttonIndex === 2) {
+          // Archive conversation
+          onArchive(item.id);
+        } else if (buttonIndex === 3) {
+          // Delete conversation
+          handleDelete();
+        }
+      },
+    );
+  };
+
   return (
     <View style={[styles.chatItem, isUnread && styles.chatItemUnread]}>
       <TouchableOpacity
