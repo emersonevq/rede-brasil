@@ -5,10 +5,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  PanResponder,
 } from 'react-native';
 import { Audio } from 'expo-av';
-import { Mic, Square, Send, X, Trash2 } from 'lucide-react-native';
+import { Mic, Square, Send, Trash2, Play, Pause } from 'lucide-react-native';
 
 interface AudioRecorderProps {
   onAudioRecorded: (uri: string, duration: number) => void;
@@ -19,28 +18,14 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const recordingRef = useRef<Audio.Recording | null>(null);
+  const soundRef = useRef<Audio.Sound | null>(null);
   const durationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null,
   );
-  const panResponderRef = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponderCapture: () => true,
-      onPanResponderMove: () => {},
-      onPanResponderRelease: () => {
-        if (isRecording) {
-          stopRecording();
-        }
-      },
-      onPanResponderTerminate: () => {
-        if (isRecording) {
-          stopRecording();
-        }
-      },
-    }),
+  const playbackIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
   );
 
   const requestAudioPermission = async () => {
@@ -106,23 +91,49 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
     }
   };
 
+  const onPlaybackStatusUpdate = (status: any) => {
+    if (status.isLoaded) {
+      if (status.didJustFinish) {
+        setIsPlaying(false);
+        if (playbackIntervalRef.current) {
+          clearInterval(playbackIntervalRef.current);
+        }
+      }
+    } else if (status.error) {
+      console.error('Playback error:', status.error);
+      setIsPlaying(false);
+    }
+  };
+
   const playRecording = async () => {
     try {
       if (!recordingUri) return;
 
       if (soundRef.current) {
-        await soundRef.current.unloadAsync();
+        const status = await soundRef.current.getStatusAsync();
+        if (status.isLoaded) {
+          if (isPlaying) {
+            await soundRef.current.pauseAsync();
+            setIsPlaying(false);
+            if (playbackIntervalRef.current) {
+              clearInterval(playbackIntervalRef.current);
+            }
+            return;
+          } else {
+            await soundRef.current.playAsync();
+            setIsPlaying(true);
+            return;
+          }
+        }
       }
 
       const { sound } = await Audio.Sound.createAsync(
         { uri: recordingUri },
-        {},
+        { shouldPlay: true },
         onPlaybackStatusUpdate,
       );
       soundRef.current = sound;
-
       setIsPlaying(true);
-      await sound.playAsync();
     } catch (error) {
       console.error('Error playing recording:', error);
       alert('Erro ao reproduzir áudio');
@@ -133,11 +144,21 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
     try {
       if (!recordingUri) return;
 
+      if (soundRef.current) {
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+
+      if (playbackIntervalRef.current) {
+        clearInterval(playbackIntervalRef.current);
+      }
+
       setIsSaving(true);
       onAudioRecorded(recordingUri, recordingDuration);
 
       setRecordingUri(null);
       setRecordingDuration(0);
+      setIsPlaying(false);
     } catch (error) {
       console.error('Error sending audio:', error);
       alert('Erro ao enviar áudio');
@@ -150,8 +171,16 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
     if (durationIntervalRef.current) {
       clearInterval(durationIntervalRef.current);
     }
+    if (playbackIntervalRef.current) {
+      clearInterval(playbackIntervalRef.current);
+    }
+    if (soundRef.current) {
+      soundRef.current.unloadAsync();
+      soundRef.current = null;
+    }
     setRecordingUri(null);
     setRecordingDuration(0);
+    setIsPlaying(false);
   };
 
   const formatDuration = (seconds: number) => {
@@ -166,7 +195,9 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
       <View style={styles.inlineContainer}>
         <View style={styles.inlineRecordingBar}>
           <View style={styles.recordingIndicator}>
-            <View style={[styles.recordingDot, styles.recordingDotActive]} />
+            {isRecording && (
+              <View style={[styles.recordingDot, styles.recordingDotActive]} />
+            )}
             <Text style={styles.recordingText}>
               {isRecording
                 ? `Gravando... ${formatDuration(recordingDuration)}`
@@ -175,11 +206,24 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
           </View>
 
           <View style={styles.inlineActionButtons}>
-            {recordingUri && !isRecording && (
+            {!isRecording && (
               <>
                 <TouchableOpacity
                   style={styles.inlineButton}
+                  onPress={playRecording}
+                  activeOpacity={0.7}
+                >
+                  {isPlaying ? (
+                    <Pause size={18} color="#3b82f6" strokeWidth={2} />
+                  ) : (
+                    <Play size={18} color="#3b82f6" strokeWidth={2} />
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.inlineButton}
                   onPress={resetRecording}
+                  activeOpacity={0.7}
                 >
                   <Trash2 size={18} color="#ef4444" strokeWidth={2} />
                 </TouchableOpacity>
@@ -188,6 +232,7 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
                   style={[styles.inlineButton, styles.sendInlineButton]}
                   onPress={sendAudio}
                   disabled={isSaving}
+                  activeOpacity={0.7}
                 >
                   {isSaving ? (
                     <ActivityIndicator size="small" color="#fff" />
@@ -197,6 +242,16 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
                 </TouchableOpacity>
               </>
             )}
+
+            {isRecording && (
+              <TouchableOpacity
+                style={[styles.inlineButton, styles.stopRecordingButton]}
+                onPress={stopRecording}
+                activeOpacity={0.7}
+              >
+                <Square size={18} color="#fff" strokeWidth={2} fill="#ef4444" />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>
@@ -205,7 +260,6 @@ export default function AudioRecorder({ onAudioRecorded }: AudioRecorderProps) {
 
   return (
     <TouchableOpacity
-      {...panResponderRef.current.panHandlers}
       onPress={startRecording}
       onLongPress={startRecording}
       style={styles.button}
@@ -237,6 +291,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
     borderRadius: 8,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   recordingIndicator: {
     flexDirection: 'row',
@@ -252,11 +308,12 @@ const styles = StyleSheet.create({
   },
   recordingDotActive: {
     backgroundColor: '#ef4444',
+    animation: 'pulse',
   },
   recordingText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#ef4444',
+    color: '#0f172a',
   },
   inlineActionButtons: {
     flexDirection: 'row',
@@ -273,5 +330,8 @@ const styles = StyleSheet.create({
   },
   sendInlineButton: {
     backgroundColor: '#3b82f6',
+  },
+  stopRecordingButton: {
+    backgroundColor: '#ef4444',
   },
 });
