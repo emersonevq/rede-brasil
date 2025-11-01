@@ -119,7 +119,7 @@ const MessageBubble = ({
         <Image
           source={{
             uri:
-              message.sender.profile_photo ||
+              absoluteUrl(message.sender.profile_photo) ||
               `https://i.pravatar.cc/150?u=${message.sender.id}`,
           }}
           style={styles.messageSenderAvatar}
