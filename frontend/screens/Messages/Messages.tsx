@@ -29,6 +29,7 @@ import TopBar from '../../components/TopBar';
 import {
   getConversations,
   deleteConversation,
+  archiveConversation,
   getCurrentUser,
 } from '../../utils/api';
 import { initializeSocket, getSocket } from '../../utils/websocket';
