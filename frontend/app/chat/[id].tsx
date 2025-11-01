@@ -1028,9 +1028,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     marginVertical: 6,
     gap: 8,
+    paddingHorizontal: 0,
   },
   messageBubbleContainerOwn: {
     justifyContent: 'flex-end',
+    marginLeft: 'auto',
   },
   messageSenderAvatar: {
     width: 32,
