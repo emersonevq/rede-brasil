@@ -81,7 +81,6 @@ const ChatItem = ({
   currentUserId?: number;
 }) => {
   const isUnread = item.unread_count > 0;
-  const [showActions, setShowActions] = useState(false);
 
   // Get the other participant (for DMs)
   const getOtherParticipant = () => {
@@ -128,14 +127,12 @@ const ChatItem = ({
       [
         {
           text: 'Cancelar',
-          onPress: () => setShowActions(false),
           style: 'cancel',
         },
         {
           text: 'Deletar',
           onPress: () => {
             onDelete(item.id);
-            setShowActions(false);
           },
           style: 'destructive',
         },
@@ -224,28 +221,6 @@ const ChatItem = ({
             )}
           </View>
         </View>
-      </TouchableOpacity>
-
-      {showActions && (
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={handleDelete}
-          activeOpacity={0.7}
-        >
-          <Trash2 size={18} color="#ef4444" strokeWidth={2} />
-        </TouchableOpacity>
-      )}
-
-      <TouchableOpacity
-        style={styles.actionButton}
-        onPress={() => setShowActions(!showActions)}
-        activeOpacity={0.7}
-      >
-        {showActions ? (
-          <X size={18} color="#64748b" strokeWidth={2} />
-        ) : (
-          <Text style={styles.actionButtonText}>••���</Text>
-        )}
       </TouchableOpacity>
     </View>
   );
@@ -356,6 +331,19 @@ export default function MessagesScreen() {
     }
   };
 
+  const handleArchiveConversation = async (conversationId: number) => {
+    try {
+      await archiveConversation(conversationId);
+      setConversations((prev) =>
+        prev.filter((conv) => conv.id !== conversationId),
+      );
+      Alert.alert('Sucesso', 'Conversa arquivada');
+    } catch (error) {
+      Alert.alert('Erro', 'Falha ao arquivar conversa');
+      console.error(error);
+    }
+  };
+
   const handleNewChat = () => {
     router.push('/chat/new');
   };
@@ -423,6 +411,7 @@ export default function MessagesScreen() {
               item={item}
               onPress={() => handleChatPress(item.id)}
               onDelete={handleDeleteConversation}
+              onArchive={handleArchiveConversation}
               currentUserId={currentUserId}
             />
           )}
@@ -630,23 +619,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
     textAlign: 'center',
-  },
-  actionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  actionButtonText: {
-    fontSize: 20,
-    color: '#64748b',
-    fontWeight: '600',
-  },
-  deleteButton: {
-    padding: 8,
-    marginRight: 8,
   },
   errorBanner: {
     backgroundColor: '#fee2e2',
