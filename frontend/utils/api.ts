@@ -549,6 +549,14 @@ export async function deleteConversation(conversationId: number): Promise<any> {
   return request(`/chat/conversations/${conversationId}`, { method: 'DELETE' });
 }
 
+export async function archiveConversation(conversationId: number): Promise<any> {
+  return request(`/chat/conversations/${conversationId}/archive`, { method: 'POST' });
+}
+
+export async function unarchiveConversation(conversationId: number): Promise<any> {
+  return request(`/chat/conversations/${conversationId}/unarchive`, { method: 'POST' });
+}
+
 export async function searchConversations(
   query: string,
   limit: number = 20,
