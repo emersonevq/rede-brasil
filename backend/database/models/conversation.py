@@ -25,6 +25,7 @@ class Conversation(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, index=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
 
     participants: Mapped[list["User"]] = relationship(
         "User",
