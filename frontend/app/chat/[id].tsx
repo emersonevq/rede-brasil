@@ -821,7 +821,7 @@ export default function ChatScreen() {
                   <Image
                     source={{
                       uri:
-                        otherParticipant?.profile_photo ||
+                        absoluteUrl(otherParticipant?.profile_photo) ||
                         `https://i.pravatar.cc/150?u=${otherParticipant?.id}`,
                     }}
                     style={styles.headerAvatar}
