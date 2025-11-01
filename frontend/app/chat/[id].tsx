@@ -25,6 +25,7 @@ import {
   sendChatMessage,
   editMessage,
   deleteMessage,
+  absoluteUrl,
 } from '../../utils/api';
 import { getSocket, initializeSocket } from '../../utils/websocket';
 import * as ImagePicker from 'expo-image-picker';
