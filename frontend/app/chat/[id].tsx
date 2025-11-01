@@ -1185,23 +1185,23 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   inputContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 12,
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
+    backgroundColor: '#ffffff',
   },
   mediaBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     gap: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    marginBottom: 8,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 8,
+    gap: 10,
   },
   mediaButton: {
     width: 36,
