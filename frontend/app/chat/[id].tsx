@@ -728,6 +728,57 @@ export default function ChatScreen() {
     }
   };
 
+  const showMessageContextMenu = (messageId: number) => {
+    const message = messages.find((m) => m.id === messageId);
+    if (!message) return;
+
+    const isOwn = message.sender.id === currentUserId;
+    const options: string[] = ['Cancelar', 'Reagir'];
+
+    if (isOwn) {
+      options.push('Deletar');
+    } else {
+      options.push('Deletar');
+    }
+
+    const cancelButtonIndex = 0;
+    const destructiveButtonIndex = options.indexOf('Deletar');
+
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options,
+        cancelButtonIndex,
+        destructiveButtonIndex,
+        title: 'Opções da Mensagem',
+      },
+      (buttonIndex) => {
+        if (buttonIndex === 1) {
+          // Reagir
+          setReactionTargetId(messageId);
+        } else if (buttonIndex === destructiveButtonIndex) {
+          // Deletar
+          Alert.alert(
+            'Deletar mensagem',
+            'Tem certeza que deseja deletar esta mensagem?',
+            [
+              {
+                text: 'Cancelar',
+                style: 'cancel',
+              },
+              {
+                text: 'Deletar',
+                onPress: () => {
+                  handleDeleteMessage(messageId);
+                },
+                style: 'destructive',
+              },
+            ],
+          );
+        }
+      },
+    );
+  };
+
   const getConversationTitle = useMemo(() => {
     if (!conversation) return 'Carregando...';
     if (conversation.name) return conversation.name;
