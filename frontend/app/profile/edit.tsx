@@ -120,6 +120,7 @@ export default function EditProfilePage() {
   };
 
   const handleSave = async () => {
+    if (!mountedRef.current) return;
     setSaving(true);
     try {
       const payload: any = {
@@ -157,9 +158,11 @@ export default function EditProfilePage() {
       }
 
       await updateMyProfile(payload);
+      if (!mountedRef.current) return;
       Alert.alert('Sucesso', 'Perfil atualizado com sucesso');
       try {
         const me = await getCurrentUser();
+        if (!mountedRef.current) return;
         const username =
           me?.username ||
           `${me?.first_name || ''}${me?.last_name || ''}`
@@ -169,13 +172,14 @@ export default function EditProfilePage() {
           router.replace(`/profile/${encodeURIComponent(username)}`);
         else router.back();
       } catch {
-        router.back();
+        if (mountedRef.current) router.back();
       }
     } catch (err: any) {
+      if (!mountedRef.current) return;
       console.error('Erro ao salvar perfil:', err);
       Alert.alert('Erro', err?.message || 'Falha ao salvar perfil');
     } finally {
-      setSaving(false);
+      if (mountedRef.current) setSaving(false);
     }
   };
 
