@@ -6,14 +6,14 @@ class Token(BaseModel):
 
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=6)
+    password: str = Field(min_length=6, max_length=72)
 
 class SignupRequest(BaseModel):
     first_name: str
     last_name: str
     email: EmailStr
     username: str = Field(min_length=3, max_length=30)
-    password: str = Field(min_length=6)
+    password: str = Field(min_length=6, max_length=72)
 
 class CheckUsernameRequest(BaseModel):
     username: str = Field(min_length=3, max_length=30)
