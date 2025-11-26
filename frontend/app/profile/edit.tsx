@@ -22,7 +22,7 @@ import { useRouter } from 'expo-router';
 export default function EditProfilePage() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const mountedRef = React.useRef(true);
+  const mountedRef = useRef(true);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
