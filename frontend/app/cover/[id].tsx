@@ -29,7 +29,7 @@ export default function CoverView() {
     { id: string; user: string; text: string }[]
   >([]);
   const [commentText, setCommentText] = useState('');
-  const mountedRef = React.useRef(true);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
     mountedRef.current = true;
