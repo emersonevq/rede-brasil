@@ -112,10 +112,16 @@ export default function SignupScreen() {
 
   const generateUsernameAuto = (): string => {
     const base = `${firstName.toLowerCase().replace(/\s+/g, '')}${lastName.toLowerCase().replace(/\s+/g, '')}`;
-    if (base.length === 0) {
-      return `user${Math.floor(Math.random() * 100000)}`;
+
+    // Ensure username is at least 3 characters
+    if (base.length >= 3) {
+      return base;
     }
-    return base;
+
+    // If too short, append a random number to reach 3+ characters
+    const randomSuffix = Math.floor(Math.random() * 1000);
+    const combined = `${base}${randomSuffix}`;
+    return combined.slice(0, 30); // Cap at max 30 characters
   };
 
   const handleCreate = async () => {
