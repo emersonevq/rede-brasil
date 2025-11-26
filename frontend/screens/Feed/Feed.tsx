@@ -22,12 +22,15 @@ export default function FeedScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const { setUnreadVisits, setUnreadNotifications } = useUnread();
+  const mountedRef = React.useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
     const load = async () => {
       try {
         const api = await import('../../utils/api');
         const data = await api.getPosts();
+        if (!mountedRef.current) return;
         const mapped = data.map((p) => ({
           id: String(p.id),
           user: p.user_name,
@@ -41,34 +44,39 @@ export default function FeedScreen() {
           comments: [],
           uniqueId: p.unique_id,
         }));
-        setPosts(mapped);
+        if (mountedRef.current) setPosts(mapped);
       } catch (e) {
         // fallback: keep empty if backend unavailable
-        setPosts([]);
+        if (mountedRef.current) setPosts([]);
       }
 
       // Load unread counts when feed mounts
       try {
         const visitResult = await getUnreadVisitCount();
-        setUnreadVisits(visitResult.unread_visits);
+        if (mountedRef.current) setUnreadVisits(visitResult.unread_visits);
 
         const notifResult = await getUnreadNotificationsCount();
-        setUnreadNotifications(notifResult.unread_count);
+        if (mountedRef.current) setUnreadNotifications(notifResult.unread_count);
       } catch (e) {
         // Silently fail if not authenticated
       }
     };
     load();
     const unsub = subscribe(() => {});
-    return unsub;
+    return () => {
+      mountedRef.current = false;
+      unsub();
+    };
   }, [setUnreadVisits, setUnreadNotifications]);
 
   const onRefresh = useCallback(() => {
     (async () => {
+      if (!mountedRef.current) return;
       setRefreshing(true);
       try {
         const api = await import('../../utils/api');
         const data = await api.getPosts();
+        if (!mountedRef.current) return;
         const mapped = data.map((p) => ({
           id: String(p.id),
           user: p.user_name,
@@ -82,10 +90,10 @@ export default function FeedScreen() {
           comments: [],
           uniqueId: p.unique_id,
         }));
-        setPosts(mapped);
+        if (mountedRef.current) setPosts(mapped);
       } catch {
       } finally {
-        setRefreshing(false);
+        if (mountedRef.current) setRefreshing(false);
       }
     })();
   }, []);
@@ -106,6 +114,7 @@ export default function FeedScreen() {
       try {
         const api = await import('../../utils/api');
         const created = await api.createPost(content);
+        if (!mountedRef.current) return;
         const BASE_URL =
           (typeof process !== 'undefined' &&
             (process as any).env &&
@@ -124,9 +133,11 @@ export default function FeedScreen() {
           liked: false,
           comments: [],
         };
-        setPosts((prev) => [newPost, ...prev]);
+        if (mountedRef.current) setPosts((prev) => [newPost, ...prev]);
       } catch (e: any) {
-        alert(e?.message || 'Falha ao publicar');
+        if (mountedRef.current) {
+          alert(e?.message || 'Falha ao publicar');
+        }
       }
     })();
   }, []);
