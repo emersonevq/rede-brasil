@@ -29,33 +29,46 @@ export default function CoverView() {
     { id: string; user: string; text: string }[]
   >([]);
   const [commentText, setCommentText] = useState('');
+  const mountedRef = React.useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
     let mounted = true;
     (async () => {
       try {
         setLoading(true);
         const user = await getUserById(id);
-        if (!mounted) return;
+        if (!mounted || !mountedRef.current) return;
         setCoverUrl(absoluteUrl(user.cover_photo) || null);
       } catch (e: any) {
-        if (!mounted) return;
+        if (!mounted || !mountedRef.current) return;
         setError(e?.message || 'Falha ao carregar capa');
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted && mountedRef.current) setLoading(false);
       }
     })();
     return () => {
       mounted = false;
+      mountedRef.current = false;
     };
   }, [id]);
 
   const handleAddComment = () => {
+    if (!mountedRef.current) return;
     const t = commentText.trim();
     if (!t) return;
-    const newComment = { id: `${Date.now()}`, user: 'Você', text: t };
-    setComments((prev) => [newComment, ...prev]);
-    setCommentText('');
+    try {
+      const newComment = { id: `${Date.now()}`, user: 'Você', text: t };
+      if (mountedRef.current) {
+        setComments((prev) => [newComment, ...prev]);
+        setCommentText('');
+      }
+    } catch (e) {
+      console.error('Error adding comment:', e);
+      if (mountedRef.current) {
+        alert('Erro ao adicionar comentário');
+      }
+    }
   };
 
   if (loading) {
