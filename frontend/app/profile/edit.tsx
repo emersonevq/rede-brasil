@@ -22,6 +22,7 @@ import { useRouter } from 'expo-router';
 export default function EditProfilePage() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const mountedRef = React.useRef(true);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -54,11 +55,12 @@ export default function EditProfilePage() {
   const [showTagModal, setShowTagModal] = useState(false);
 
   useEffect(() => {
+    mountedRef.current = true;
     let mounted = true;
     (async () => {
       try {
         const prof = await getMyProfile();
-        if (!mounted) return;
+        if (!mounted || !mountedRef.current) return;
         setBio(prof.bio || '');
         setHometown(prof.hometown || '');
         setCurrentCity(prof.current_city || '');
@@ -75,17 +77,19 @@ export default function EditProfilePage() {
         setShowContactEmail(prof.show_contact_email === true);
         setShowContactPhone(prof.show_contact_phone === true);
         setShowWorkplace(prof.show_workplace !== false);
-        if (prof.relationship_user)
+        if (prof.relationship_user && mountedRef.current)
           setSelectedRelationUser(prof.relationship_user);
       } catch (err: any) {
+        if (!mountedRef.current) return;
         console.error('Erro ao carregar perfil:', err);
         Alert.alert('Erro', err?.message || 'Falha ao carregar perfil');
       } finally {
-        setLoading(false);
+        if (mounted && mountedRef.current) setLoading(false);
       }
     })();
     return () => {
       mounted = false;
+      mountedRef.current = false;
     };
   }, []);
 
