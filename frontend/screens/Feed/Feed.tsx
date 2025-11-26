@@ -22,7 +22,7 @@ export default function FeedScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const { setUnreadVisits, setUnreadNotifications } = useUnread();
-  const mountedRef = React.useRef(true);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
     mountedRef.current = true;
