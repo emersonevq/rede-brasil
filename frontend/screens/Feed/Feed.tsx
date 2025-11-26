@@ -56,7 +56,8 @@ export default function FeedScreen() {
         if (mountedRef.current) setUnreadVisits(visitResult.unread_visits);
 
         const notifResult = await getUnreadNotificationsCount();
-        if (mountedRef.current) setUnreadNotifications(notifResult.unread_count);
+        if (mountedRef.current)
+          setUnreadNotifications(notifResult.unread_count);
       } catch (e) {
         // Silently fail if not authenticated
       }
