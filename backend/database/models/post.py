@@ -8,7 +8,6 @@ class Post(Base):
     __table_args__ = (
         Index('ix_posts_user_created', 'user_id', 'created_at'),
         Index('ix_posts_created', 'created_at'),
-        Index('ix_posts_unique_id', 'unique_id'),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
