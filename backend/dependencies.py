@@ -1,5 +1,5 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthCredentials
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from database.session import SessionLocal, get_db
 from core.security import verify_token
@@ -16,7 +16,7 @@ async def get_db_session() -> Session:
         db.close()
 
 # Authentication dependency
-async def get_current_user(credentials: HTTPAuthCredentials = Depends(security)):
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Get current authenticated user from JWT token"""
     token = credentials.credentials
     try:
